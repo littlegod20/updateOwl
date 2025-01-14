@@ -15,7 +15,7 @@ const app = new App({
   // logLevel: LogLevel.DEBUG,
 });
 
-app.message(/hello/, async ({ say }) => {
+app.message(/hello/i, async ({ say }) => {
   try {
     say("Hello there");
   } catch (err) {
@@ -23,45 +23,6 @@ app.message(/hello/, async ({ say }) => {
   }
 });
 
-const addStandupResponse = async ({
-  teamId,
-  userId,
-  updates,
-}: {
-  teamId: string;
-  userId: string;
-  updates: {
-    yesterday: string;
-    today: string;
-    blockers: string[];
-  };
-}) => {
-  try {
-    const docRef = await db.collection("standups").add({
-      date: new Date().toISOString(),
-      teamId,
-      userId,
-      updates,
-    });
-    console.log("Standup added with ID:", docRef.id);
-  } catch (error) {
-    console.error("Error adding standup:", error);
-  }
-};
-
-const fetchStandups = async () => {
-  try {
-    const standups: object[] = [];
-    const snapshot = await db.collection("standups").get();
-    snapshot.forEach((doc) => {
-      standups.push({ id: doc.id, ...doc.data() });
-    });
-    console.log(standups);
-  } catch (error) {
-    console.error("Error fetching standups:", error);
-  }
-};
-fetchStandups();
 
 // addStandupResponse({
 //   userId: "U01ABCD1234",

@@ -1,5 +1,5 @@
 {
-  "name": "updateOwl",
+  "name": "update-owl",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -24,6 +24,7 @@
   "dependencies": {
     "@slack/bolt": "^4.2.0",
     "dotenv": "^16.4.7",
-    "firebase-admin": "^13.0.2"
+    "firebase-admin": "^13.0.2",
+    "node-schedule": "^2.1.1"
   }
 }
