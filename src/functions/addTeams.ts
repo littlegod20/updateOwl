@@ -35,7 +35,7 @@ export const addTeams = async (
       throw new Error("Channel creation failed");
     }
 
-    // adding the members to the new channelU088CJ04PK5
+    // adding the members to the new channel
     for (const member of members) {
       try {
         await client.conversations.invite({
