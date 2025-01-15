@@ -25,12 +25,12 @@ export const registerAddTeamCommand = (app: App) => {
 
       // extract input values
       const teamName = view.state.values.team_name_block.team_name.value;
-      const adminNames =
-        view.state.values.team_admin_block.team_admins.selected_options?.map(
+      const memberNames =
+        view.state.values.team_members_block.team_members.selected_options?.map(
           (item) => item.text.text
         );
 
-      if (!adminNames || adminNames.length === 0) {
+      if (!memberNames || memberNames.length === 0) {
         throw new Error("No valid admins selected");
       }
 
@@ -39,7 +39,7 @@ export const registerAddTeamCommand = (app: App) => {
       }
 
       // call the addTeam function to add the team and create the channel
-      const result = await addTeams(teamName, adminNames, client);
+      const result = await addTeams(teamName, memberNames, client);
 
       // notifying the user that the team and channel have been created
       await client.chat.postMessage({
@@ -52,7 +52,7 @@ export const registerAddTeamCommand = (app: App) => {
   );
 
   // Handle the options request
-  app.options("team_admins", async ({ payload, ack, client }) => {
+  app.options("team_members", async ({ payload, ack, client }) => {
     try {
       const query = payload.value.toLowerCase();
       const response = await client.users.list({

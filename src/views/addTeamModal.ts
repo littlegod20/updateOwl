@@ -15,30 +15,30 @@ export const addTeamModal = {
       block_id: "team_name_block",
       label: {
         type: "plain_text",
-        text: "Please enter the name of the team:",
+        text: "Enter team name:",
       },
       element: {
         type: "plain_text_input" as const,
         action_id: "team_name",
         placeholder: {
           type: "plain_text" as const,
-          text: "Enter team name",
+          text: "eg. watchdogs",
         },
       },
     },
     {
       type: "input" as const,
-      block_id: "team_admin_block",
+      block_id: "team_members_block",
       label: {
         type: "plain_text" as const,
-        text: "Enter admin emails, usernames, or display names (comma-separated):",
+        text: "Enter team member name(s):",
       },
       element: {
         type: "multi_external_select" as const,
-        action_id: "team_admins",
+        action_id: "team_members",
         placeholder: {
           type: "plain_text" as const,
-          text: "e.g. johndoes@example.com, Ishmael",
+          text: "e.g. Ishmael",
         },
         min_query_length: 1,
       },

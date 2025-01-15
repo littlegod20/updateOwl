@@ -2,10 +2,9 @@ import { WebClient } from "@slack/web-api";
 import { resolveUserIds } from "../helpers/resolverUserIds";
 import db from "../services/database";
 
-
 export const addTeams = async (
   teamName: string | null,
-  adminNames: string[],
+  memberNames: string[],
   client: WebClient
 ) => {
   try {
@@ -13,15 +12,15 @@ export const addTeams = async (
       throw new Error("Team name can not be empty");
     }
 
-    if (adminNames.length === 0) {
-      throw new Error("No valid adminNames provided");
+    if (memberNames.length === 0) {
+      throw new Error("No valid memberNames provided");
     }
 
     // resolve user ids
-    const admins = await resolveUserIds(adminNames, client);
+    const members = await resolveUserIds(memberNames, client);
 
-    if (admins.length === 0) {
-      throw new Error("No valid admins resolved from input");
+    if (members.length === 0) {
+      throw new Error("No valid members resolved from input");
     }
 
     const teamRef = db.collection("teams").doc();
@@ -31,8 +30,7 @@ export const addTeams = async (
     await teamRef.set({
       teamId,
       name: teamName,
-      admins,
-      members: [],
+      members,
       schedule: "daily at 9am",
       createdAt: new Date().toISOString(),
     });
@@ -47,15 +45,15 @@ export const addTeams = async (
       throw new Error("Channel creation failed");
     }
 
-    // adding the admins to the new channelU088CJ04PK5
-    for (const admin of admins) {
+    // adding the members to the new channelU088CJ04PK5
+    for (const member of members) {
       try {
         await client.conversations.invite({
           channel: result.channel.id as string,
-          users: admin,
+          users: member,
         });
       } catch (error) {
-        console.error(`Failed to invite user ${admin}:`, error);
+        console.error(`Failed to invite user ${member}:`, error);
       }
     }
 
