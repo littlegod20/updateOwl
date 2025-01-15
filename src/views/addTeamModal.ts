@@ -43,5 +43,12 @@ export const addTeamModal = {
         min_query_length: 1,
       },
     },
+    {
+      type: "input" as const,
+      block_id: "standUp_questions",
+      label:{
+        type: ""
+      }
+    }
   ],
 };
