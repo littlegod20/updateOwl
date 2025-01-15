@@ -18,11 +18,16 @@ export const removeTeam = async (teamId: string, client: WebClient) => {
     // Archiving the Slack channel if it exists
     if (teamData.teamId) {
       console.log("archiving...");
-      await client.conversations.archive({ channel: teamData.teamId });
+      await client.conversations.archive({
+        channel: teamData.teamId as string,
+      });
     }
 
     // Deleting the team from Firestore using the document ID
-    await db.collection("teams").doc(teamData.id).delete();
+    await db
+      .collection("teams")
+      .doc(teamData.id as string)
+      .delete();
 
     return { success: true, message: "Team removed successfully" };
   } catch (error) {

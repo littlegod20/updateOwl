@@ -19,7 +19,7 @@ export const getDocumentByField = async (
     const document = querySnapshot.docs[0];
 
     console.log("Document data:", document.data());
-    const doc: { [key: string]: string } = {
+    const doc: { [key: string]: string | string[] } = {
       id: document.id,
       ...document.data(),
     };
