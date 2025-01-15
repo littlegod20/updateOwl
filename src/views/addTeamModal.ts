@@ -1,6 +1,6 @@
 export const addTeamModal = {
   type: "modal" as const,
-  callback_id: "add_team_modal", 
+  callback_id: "add_team_modal",
   title: {
     type: "plain_text" as const,
     text: "Add New Team",
@@ -43,12 +43,5 @@ export const addTeamModal = {
         min_query_length: 1,
       },
     },
-    {
-      type: "input" as const,
-      block_id: "standUp_questions",
-      label:{
-        type: ""
-      }
-    }
   ],
 };
