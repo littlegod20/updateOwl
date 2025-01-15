@@ -6,12 +6,12 @@ export const resolveUserIds = async (
 ): Promise<string[]> => {
   const userIds: string[] = [];
 
-  console.log(
-    "INputs:",
-    inputs.map((item) => item)
-  );
+  // console.log(
+  //   "INputs:",
+  //   inputs.map((item) => item)
+  // );
 
-  console.log("AllUsers:", await client.users.list({}));
+  // console.log("AllUsers:", await client.users.list({}));
   for (const input of inputs) {
     try {
       // If not found by email, fetch all users and filter by display name

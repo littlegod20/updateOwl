@@ -23,17 +23,7 @@ export const addTeams = async (
       throw new Error("No valid members resolved from input");
     }
 
-    const teamRef = db.collection("teams").doc();
-    const teamId = teamRef.id;
 
-    // adding the team to the database
-    await teamRef.set({
-      teamId,
-      name: teamName,
-      members,
-      schedule: "daily at 9am",
-      createdAt: new Date().toISOString(),
-    });
 
     // creating a new channel for the created team
     const result = await client.conversations.create({
@@ -56,6 +46,18 @@ export const addTeams = async (
         console.error(`Failed to invite user ${member}:`, error);
       }
     }
+
+        const teamRef = db.collection("teams").doc();
+        const teamId = result.channel.id;
+
+        // adding the team to the database
+        await teamRef.set({
+          teamId,
+          name: teamName,
+          members,
+          schedule: "daily at 9am",
+          createdAt: new Date().toISOString(),
+        });
 
     return { success: true, teamId, channelId: result.channel.id as string };
   } catch (error) {

@@ -1,6 +1,6 @@
 export const addTeamModal = {
   type: "modal" as const,
-  callback_id: "add_team_modal", // Define the callback id for the modal
+  callback_id: "add_team_modal", 
   title: {
     type: "plain_text" as const,
     text: "Add New Team",
