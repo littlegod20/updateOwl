@@ -1,41 +1,22 @@
-import { App, LogLevel } from "@slack/bolt";
-import db from "./services/database";
-import dotenv from "dotenv";
+import { registerAddTeamCommand } from "./commands/addTeamCommand";
+import { removeMemberCommand } from "./commands/removeMemberCommand";
+import { removeTeamCommand } from "./commands/removeTeamCommand";
+import { app } from "./config/bot.config";
 
-dotenv.config();
+// Register the add-team command
+registerAddTeamCommand(app);
 
+// Remove team from db and channel from slack
+removeTeamCommand(app);
 
-
-
-const app = new App({
-  token: process.env.SLACK_BOT_TOKEN as string,
-  signingSecret: process.env.SLACK_SIGNING_SECRET as string,
-  socketMode: true,
-  appToken: process.env.SLACK_APP_TOKEN as string,
-  // logLevel: LogLevel.DEBUG,
-});
-
-app.message(/hello/i, async ({ say }) => {
-  try {
-    say("Hello there");
-  } catch (err) {
-    console.log("err");
-  }
-});
-
-
-// addStandupResponse({
-//   userId: "U01ABCD1234",
-//   teamId: "team123",
-//   updates: {
-//     yesterday: "Worked on project setup",
-//     today: "Continue with API development",
-//     blockers: ["Waiting for code review"],
-//   },
-// });
-
+// Remove team member from channel and dbs
+removeMemberCommand(app);
 
 (async () => {
-  await app.start(process.env.PORT || 3000);
-  console.log("Bolt app is running!");
+  try {
+    await app.start(process.env.PORT || 3000);
+    console.log("Bolt app is running!");
+  } catch (error) {
+    console.error("Unable to start the app:", error);
+  }
 })();
