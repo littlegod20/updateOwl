@@ -1,10 +1,3 @@
-import { App, LogLevel } from "@slack/bolt";
-import {
-  OverflowAction,
-  BlockAction,
-  Middleware,
-  SlackActionMiddlewareArgs,
-} from "@slack/bolt";
 // import db from "./services/database";
 import dotenv from "dotenv";
 import { registerAddTeamCommand } from "./commands/addTeamCommand";
@@ -15,6 +8,7 @@ import {viewStandups_action} from "./actions/viewStandups_action"
 import {manageTeams_action, createTeams_action, addTeamModal_action, overflowMenu_action, deleteTeam_action} from "./actions/manageTeams_action"
 import { app } from "./config/bot.config";
 import { appHome_event } from "./events/appHome_event";
+import { initializeSchedules } from "./functions/initializeSchedules";
 
 dotenv.config();
 
