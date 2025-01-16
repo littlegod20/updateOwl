@@ -1,4 +1,5 @@
 import { WebClient } from "@slack/web-api";
+import { addTeamModal } from "./addTeamModal";
 
 
 export const publishManageTeamsView = async (client: WebClient, user_id: string) => {
@@ -579,53 +580,7 @@ export const publishManageTeamsView = async (client: WebClient, user_id: string)
     try {
         await client.views.open({
             trigger_id: triggerId,
-            view: {
-              type: "modal",
-              callback_id: "add_team_modal", // Define the callback id for the modal
-              title: {
-                type: "plain_text",
-                text: "Add New Team",
-              },
-              submit: {
-                type: "plain_text",
-                text: "Create Team",
-              },
-              blocks: [
-                {
-                  type: "input",
-                  block_id: "team_name_block",
-                  label: {
-                    type: "plain_text",
-                    text: "Please enter the name of the team:",
-                  },
-                  element: {
-                    type: "plain_text_input",
-                    action_id: "team_name",
-                    placeholder: {
-                      type: "plain_text",
-                      text: "Enter team name",
-                    },
-                  },
-                },
-                {
-                  type: "input",
-                  block_id: "team_admin_block",
-                  label: {
-                    type: "plain_text",
-                    text: "Enter admin emails, usernames, or display names (comma-separated):",
-                  },
-                  element: {
-                    type: "multi_external_select",
-                    action_id: "team_admins",
-                    placeholder: {
-                      type: "plain_text",
-                      text: "e.g. johndoes@example.com, Ishmael",
-                    },
-                    min_query_length: 1,
-                  },
-                },
-              ],
-            },
+            view: addTeamModal
         });
   
         console.log("✅ Opened modal for creating a new team");
