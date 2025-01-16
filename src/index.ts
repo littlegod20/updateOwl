@@ -2,15 +2,14 @@ import { App, LogLevel } from "@slack/bolt";
 import { OverflowAction, BlockAction,Middleware, SlackActionMiddlewareArgs } from "@slack/bolt";
 // import db from "./services/database";
 import dotenv from "dotenv";
-import { publishHomeView } from "./views/home_view";
-import { publishManageTeamsView, publishEditTeamView, publishDeleteTeamView, publishCreateTeamModal } from "./views/manageTeams_view";
 import { registerAddTeamCommand } from "./commands/addTeamCommand";
 import { removeMemberCommand } from "./commands/removeMemberCommand";
 import { removeTeamCommand } from "./commands/removeTeamCommand";
 import {goBack_action, goBackToManageTeams_action} from "./actions/goBack_action"
 import {viewStandups_action} from "./actions/viewStandups_action"
-import {manageTeams_action, createTeams_action, overflowMenu_action, deleteTeam_action} from "./actions/manageTeams_action"
+import {manageTeams_action, createTeams_action, addTeamModal_action, overflowMenu_action, deleteTeam_action} from "./actions/manageTeams_action"
 import { app } from "./config/bot.config";
+import { appHome_event } from "./events/appHome_event";
 
 dotenv.config();
 
@@ -24,6 +23,12 @@ removeTeamCommand(app);
 removeMemberCommand(app);
 
 
+
+//register listener for app home event
+appHome_event(app);
+
+
+
 //register listeners for Button actions in the App Home
 
 goBack_action(app)
@@ -35,6 +40,7 @@ viewStandups_action(app);
 manageTeams_action(app);
 
 createTeams_action(app);
+addTeamModal_action(app);
 
 overflowMenu_action(app);
 
