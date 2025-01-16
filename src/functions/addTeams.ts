@@ -31,6 +31,7 @@ export const addTeams = async (
       console.log(questionsArray); // Output the resulting array
     }
 
+    console.log("Member Names", memberNames);
     // Resolve user IDs
     const members = await resolveUserIds(memberNames, client);
 

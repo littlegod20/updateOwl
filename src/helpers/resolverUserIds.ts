@@ -5,33 +5,24 @@ export const resolveUserIds = async (
   client: WebClient
 ): Promise<string[]> => {
   const userIds: string[] = [];
-  let allUsers: any[] = [];
-  let cursor: string | undefined;
-
+  
   try {
-    // Fetch all users (handle pagination)
-    do {
-      const response = await client.users.list({ cursor });
-      allUsers = [...allUsers, ...(response.members || [])];
-      cursor = response.response_metadata?.next_cursor;
-    } while (cursor);
+    // Fetch all users
+    const allUsers = await client.users.list({});
+    if (!allUsers.members) {
+      console.warn("No members found in the users list.");
+      return [];
+    }
 
-    console.log("All Users:", JSON.stringify(allUsers, null, 2));
-
-
+    // Iterate through the input strings and find matching users
     for (const input of inputs) {
-      // Normalize input
-      const normalizedInput = input.trim().toLowerCase();
-
-      // Find matched user
-      const matchedUser = allUsers.find(
+      const matchedUser = allUsers.members.find(
         (user) =>
-          user.profile?.real_name?.trim().toLowerCase() === normalizedInput ||
-          user.profile?.display_name?.trim().toLowerCase() === normalizedInput ||
-          user.name?.trim().toLowerCase() === normalizedInput
+          user.id === input || // Check if input matches user ID
+          user.name?.toLowerCase() === input.toLowerCase() || // Check if input matches username
+          user.profile?.real_name?.toLowerCase() === input.toLowerCase() // Check if input matches real name
       );
 
-      console.log("Matched User", matchedUser);
       if (matchedUser?.id) {
         userIds.push(matchedUser.id);
       } else {
@@ -39,9 +30,8 @@ export const resolveUserIds = async (
       }
     }
   } catch (error) {
-    console.error("Error resolving user IDs:", error);
+    console.error("Error fetching users from Slack API:", error);
   }
 
   return userIds;
 };
-
