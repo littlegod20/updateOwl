@@ -5,14 +5,13 @@ import db from "../services/database";
 export const addTeams = async (
   teamName: string | null,
   memberNames: string[],
-  client: WebClient,
-  standupTime: string,
-  standupQuestions: string,
   timeZone: string,
+  client: WebClient,
+  savedStandups: any[]
 ) => {
   try {
 
-    let questionsArray:string[] = [];
+    // let questionsArray:string[] = [];
 
     if (!teamName) {
       throw new Error("Team name cannot be empty");
@@ -22,16 +21,17 @@ export const addTeams = async (
       throw new Error("No valid memberNames provided");
     }
 
-    if(standupQuestions){
-      // Check if standupQuestions contains a newline character
-      questionsArray = standupQuestions.includes('\n')
-      ? standupQuestions.split('\n')  // Split by newline if it exists
-      : [standupQuestions];            // Create an array with the single question
+    // if(standupQuestions){
+    //   // Check if standupQuestions contains a newline character
+    //   questionsArray = standupQuestions.includes('\n')
+    //   ? standupQuestions.split('\n')  // Split by newline if it exists
+    //   : [standupQuestions];            // Create an array with the single question
 
-      console.log(questionsArray); // Output the resulting array
-    }
+    //   console.log(questionsArray); // Output the resulting array
+    // }
 
     console.log("Member Names", memberNames);
+
     // Resolve user IDs
     const members = await resolveUserIds(memberNames, client);
 
@@ -70,17 +70,27 @@ export const addTeams = async (
       }
     }
 
+
+    // Format the teamstandupQuestions array from saved standups
+    const formattedStandups = savedStandups.map(standup => ({
+      id: standup.id,
+      questions: standup.questions,
+      standupDays: standup.standupDays,
+      standupTimes: standup.standupTimes,
+      // timeZone: standup.timeZone,
+      reminderTimes: standup.reminderTimes
+    }));
+
     // Store the team details in the database
     const teamRef = db.collection("teams").doc();
     await teamRef.set({
       teamId: result.channel.id,
       name: teamName,
       members,
-      teamstandupQuestions: [{
-        questions: questionsArray,
-        teamstandupTime: standupTime
-      }],
-      schedule: `${standupTime} ${timeZone}`,
+      teamstandupQuestions: formattedStandups,
+      timeZone: timeZone,
+      // Keep schedule field for backward compatibility
+      // schedule: formattedStandups[0] ? `${formattedStandups[0].standupTime} ${formattedStandups[0].timeZone}` : "",
       createdAt: new Date().toISOString(),
     });
 
