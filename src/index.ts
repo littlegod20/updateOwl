@@ -19,6 +19,9 @@ import { app } from "./config/bot.config";
 import { appHome_event } from "./events/appHome_event";
 import { initializeSchedules } from "./functions/initializeSchedules";
 import { listenForTeamUpdates } from "./helpers/listenForTeamUpdates";
+import { scheduleStandUpMessage } from "./helpers/schedule";
+import { handleButtonClick } from "./helpers/handleButtonClick";
+import { handleModalSubmission } from "./helpers/handleModalSubmission";
 
 dotenv.config();
 
@@ -51,6 +54,18 @@ overflowMenu_action(app);
 
 deleteTeam_action(app);
 
+// Listen for button clicks
+app.action(/^submit_standup_.*/, async ({ ack, body }) => {
+  await ack();
+  await handleButtonClick(body);
+});
+
+// Listen for modal submissions
+app.view("standup_submission", async ({ ack, body }) => {
+  await ack();
+  await handleModalSubmission(body);
+});
+
 app.message(/hello/i, async ({ say }) => {
   try {
     say("Hello there");
@@ -66,6 +81,27 @@ app.message(/hello/i, async ({ say }) => {
 
     // initializing existing schedules
     await initializeSchedules();
+
+    // scheduleStandUpMessage("C089F1LJN2V", {
+    //   id: "VtYOMbQBVvkjohTCLdQn",
+    //   name: "TeamA",
+    //   teamId: "C089F1LJN2V",
+    //   timeZone: "GMT",
+    //   teamstandupQuestions: [
+    //     {
+    //       id: "1737078319824",
+    //       questions: [
+    //         "How are you doing today?",
+    //         "Have you been working hard?",
+    //         "Is this you firs time here?"
+    //       ],
+    //       standupDays: ["Monday", "Friday"], // Today for testing
+    //       standupTimes: ["13:30"],
+    //       reminderTimes: ["01:26"],
+    //     },
+    //   ],
+    //   members: ["U087XTCCQUF", "U0889H52ABF"],
+    // });
 
     // start listening for real-time team updates
     listenForTeamUpdates();

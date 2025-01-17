@@ -14,9 +14,12 @@ const scheduledJobs: {
 } = {};
 
 // schedule a standup message for a team
-export const scheduleStandUpMessage = (teamId: string, teamData: any) => {
-  const timezone = teamData.timezone || "GMT";
-  console.log("TimeZone:", timezone);
+export const scheduleStandUpMessage = (
+  teamId: string,
+  teamData: TeamDocumentTypes
+) => {
+  const timezone = teamData.timeZone || "GMT";
+  // console.log("TimeZone:", timezone);
 
   if (
     !teamData.teamstandupQuestions ||
@@ -26,21 +29,28 @@ export const scheduleStandUpMessage = (teamId: string, teamData: any) => {
     return;
   }
 
+  
+  console.log("teamId:", teamId);
   // cancel existing jobs for the team
   if (scheduledJobs[teamId]) {
     Object.values(scheduledJobs[teamId])
-      .flat()
-      .forEach((job) => job.cancel());
+    .filter((jobs) => Array.isArray(jobs))
+    .flat()
+    .forEach((job) => {
+      if (job) {
+        job.cancel();
+      }
+    });
     delete scheduledJobs[teamId];
     console.log(`Existing jobs for team ${teamId} canceled.`);
   }
-
+  
   // Schedule standups for each configuration
   scheduledJobs[teamId] = {};
-
+  
   teamData.teamstandupQuestions.forEach((standupConfig: any) => {
     const { id, questions, standupDays, standupTimes } = standupConfig;
-
+    
     if (
       !standupDays ||
       !standupTimes ||
@@ -52,8 +62,8 @@ export const scheduleStandUpMessage = (teamId: string, teamData: any) => {
       );
       return;
     }
-
-    scheduledJobs[teamId][id] = [];
+    
+    scheduledJobs[teamId][id] = scheduledJobs[teamId][id] || [];
 
     standupDays.forEach((day: string) => {
       const dayOfWeek = DateTime.fromFormat(day, "cccc").weekday;
@@ -61,39 +71,79 @@ export const scheduleStandUpMessage = (teamId: string, teamData: any) => {
       standupTimes.forEach((time: string) => {
         const standUpTime = DateTime.fromISO(time, { zone: timezone });
 
+        if (!standUpTime.isValid) {
+          console.error(`Invalid standup time: ${time}, Timezone: ${timezone}`);
+          return;
+        }
+
         const jobRule = new schedule.RecurrenceRule();
-        jobRule.dayOfWeek = dayOfWeek - 1;
+        jobRule.dayOfWeek = dayOfWeek;
         jobRule.hour = standUpTime.hour;
         jobRule.minute = standUpTime.minute;
         jobRule.tz = timezone;
 
+        // console.log(
+        //   `JobRule for ${teamData.name}, Standup ID: ${id}:`,
+        //   jobRule
+        // );
+
         const job = schedule.scheduleJob(jobRule, async () => {
-          console.log(
-            `Sending standup message from team: ${teamData.name}, Standup ID:${id}`
-          );
+          try {
+            console.log(
+              `Sending standup message from team: ${teamData.name}, Standup ID:${id}`
+            );
 
-          const questionText = questions.join("\n");
+            const blocks = [
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: `📢 *Standup Reminder for Team "${teamData.name}"*:\nPlease click the button below to fill out your standup report.`,
+                },
+              },
+              {
+                type: "actions",
+                elements: [
+                  {
+                    type: "button",
+                    text: {
+                      type: "plain_text",
+                      text: "Submit Standup",
+                      emoji: true,
+                    },
+                    value: `standup_${teamData.name}_${id}`,
+                    action_id: `submit_standup_${id}`,
+                  },
+                ],
+              },
+            ];
 
-          for (const memberId of teamData.members) {
-            try {
-              await slackClient.chat.postMessage({
-                channel: memberId,
-                text: `📢 *Standup Reminder for Team "${teamData.name}"*:\n${questionText}`,
-              });
-            } catch (error) {
-              console.error(`Error sending message to ${memberId}:`, error);
-            }
+            await slackClient.chat.postMessage({
+              channel: teamId,
+              blocks: blocks,
+              text: `📢 *Standup Reminder for Team "${teamData.name}"*`,
+            });
+          } catch (error) {
+            console.error(
+              `Error in standup job for team: ${teamData.name}, Standup ID: ${id}, channelID: ${teamId}`,
+              error
+            );
           }
         });
 
+        console.log(
+          `Job scheduled for ${teamData.name}, Standup ID: ${id}, Rule:`,
+          jobRule
+        );
+
         scheduledJobs[teamId][id].push(job);
-         console.log(
-           `Scheduled standup for ${
-             teamData.name
-           } on ${day} at ${standUpTime.toFormat(
-             "HH:mm"
-           )} ${timezone}, Standup ID: ${id}`
-         );
+        console.log(
+          `Scheduled standup for ${
+            teamData.name
+          } on ${day} at ${standUpTime.toFormat(
+            "HH:mm"
+          )} ${timezone}, Standup ID: ${id}`
+        );
       });
     });
   });
