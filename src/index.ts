@@ -3,12 +3,22 @@ import dotenv from "dotenv";
 import { registerAddTeamCommand } from "./commands/addTeamCommand";
 import { removeMemberCommand } from "./commands/removeMemberCommand";
 import { removeTeamCommand } from "./commands/removeTeamCommand";
-import {goBack_action, goBackToManageTeams_action} from "./actions/goBack_action"
-import {viewStandups_action} from "./actions/viewStandups_action"
-import {manageTeams_action, createTeams_action, addTeamModal_action, overflowMenu_action, deleteTeam_action} from "./actions/manageTeams_action"
+import {
+  goBack_action,
+  goBackToManageTeams_action,
+} from "./actions/goBack_action";
+import { viewStandups_action } from "./actions/viewStandups_action";
+import {
+  manageTeams_action,
+  createTeams_action,
+  addTeamModal_action,
+  overflowMenu_action,
+  deleteTeam_action,
+} from "./actions/manageTeams_action";
 import { app } from "./config/bot.config";
 import { appHome_event } from "./events/appHome_event";
 import { initializeSchedules } from "./functions/initializeSchedules";
+import { listenForTeamUpdates } from "./helpers/listenForTeamUpdates";
 
 dotenv.config();
 
@@ -21,12 +31,8 @@ removeTeamCommand(app);
 // Remove team member from channel and dbs
 removeMemberCommand(app);
 
-
-
 //register listener for app home event
 appHome_event(app);
-
-
 
 //register listeners for Button actions in the App Home
 
@@ -57,6 +63,14 @@ app.message(/hello/i, async ({ say }) => {
   try {
     await app.start(process.env.PORT || 3000);
     console.log("Bolt app is running!");
+
+    // initializing existing schedules
+    await initializeSchedules();
+
+    // start listening for real-time team updates
+    listenForTeamUpdates();
+
+    console.log("Bot initialized and ready.");
   } catch (error) {
     console.error("Unable to start the app:", error);
   }
