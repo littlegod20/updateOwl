@@ -2,6 +2,8 @@ import schedule from "node-schedule";
 import { WebClient } from "@slack/web-api";
 import { DateTime } from "luxon";
 import { config } from "dotenv";
+import db from "../services/database";
+import { scheduleReminder } from "./scheduleReminder";
 
 config();
 
@@ -29,28 +31,27 @@ export const scheduleStandUpMessage = (
     return;
   }
 
-  
-  console.log("teamId:", teamId);
+  // console.log("teamId:", teamId);
   // cancel existing jobs for the team
   if (scheduledJobs[teamId]) {
     Object.values(scheduledJobs[teamId])
-    .filter((jobs) => Array.isArray(jobs))
-    .flat()
-    .forEach((job) => {
-      if (job) {
-        job.cancel();
-      }
-    });
+      .filter((jobs) => Array.isArray(jobs))
+      .flat()
+      .forEach((job) => {
+        if (job) {
+          job.cancel();
+        }
+      });
     delete scheduledJobs[teamId];
     console.log(`Existing jobs for team ${teamId} canceled.`);
   }
-  
+
   // Schedule standups for each configuration
   scheduledJobs[teamId] = {};
-  
+
   teamData.teamstandupQuestions.forEach((standupConfig: any) => {
-    const { id, questions, standupDays, standupTimes } = standupConfig;
-    
+    const { id, standupDays, standupTimes } = standupConfig;
+
     if (
       !standupDays ||
       !standupTimes ||
@@ -62,7 +63,9 @@ export const scheduleStandUpMessage = (
       );
       return;
     }
-    
+
+    console.log("standupDays:", standupDays);
+    console.log("standupTimes:", standupTimes);
     scheduledJobs[teamId][id] = scheduledJobs[teamId][id] || [];
 
     standupDays.forEach((day: string) => {
@@ -83,7 +86,7 @@ export const scheduleStandUpMessage = (
         jobRule.tz = timezone;
 
         // console.log(
-        //   `JobRule for ${teamData.name}, Standup ID: ${id}:`,
+        //   `JobRule for ${teamData.name},day: ${day}, dayOfweek: ${jobRule.dayOfWeek}:`,
         //   jobRule
         // );
 
@@ -111,18 +114,38 @@ export const scheduleStandUpMessage = (
                       text: "Submit Standup",
                       emoji: true,
                     },
-                    value: `standup_${teamData.name}_${id}`,
+                    value: `standup_${id}`,
                     action_id: `submit_standup_${id}`,
                   },
                 ],
               },
             ];
 
-            await slackClient.chat.postMessage({
+            const message = await slackClient.chat.postMessage({
               channel: teamId,
               blocks: blocks,
               text: `📢 *Standup Reminder for Team "${teamData.name}"*`,
             });
+
+            // triggering reminders for non-respondent members
+            if (teamData.teamstandupQuestions) {
+              const reminderTimes = standupConfig.reminderTimes || [];
+              scheduleReminder(teamId, id, reminderTimes, timezone);
+            } else {
+              console.log("Nothing in team standupQuestions");
+            }
+
+            const standupMessageTs = message.ts;
+
+            // Store the `ts` in a database or in-memory storage for later use
+            // Example: save to Firestore
+            await db.collection("standups").doc(id).set(
+              {
+                messageTs: standupMessageTs,
+                teamId: teamId,
+              },
+              { merge: true }
+            );
           } catch (error) {
             console.error(
               `Error in standup job for team: ${teamData.name}, Standup ID: ${id}, channelID: ${teamId}`,
@@ -131,10 +154,10 @@ export const scheduleStandUpMessage = (
           }
         });
 
-        console.log(
-          `Job scheduled for ${teamData.name}, Standup ID: ${id}, Rule:`,
-          jobRule
-        );
+        // console.log(
+        //   `Job scheduled for ${teamData.name}, Standup ID: ${id}, Rule:`,
+        //   jobRule
+        // );
 
         scheduledJobs[teamId][id].push(job);
         console.log(

@@ -12,6 +12,7 @@ export const initializeSchedules = async () => {
 
     teamSnapshot.docs.forEach((teamDoc) => {
       const teamData = { ...teamDoc.data() } as TeamDocumentTypes;
+      // console.log('From initialize:', teamData)
       scheduleStandUpMessage(teamData.teamId, teamData);
     });
     console.log("All standup schedules initialized.");

@@ -6,10 +6,13 @@ export const listenForTeamUpdates = () => {
   db.collection("teams").onSnapshot((snapshot) => {
     snapshot.docChanges().forEach((change) => {
       const teamData = {...change.doc.data() } as TeamDocumentTypes;
+      // console.log('TeamData:', teamData)
 
       if (change.type === "added" || change.type === "modified") {
         console.log(`Team ${teamData.teamId} added/modified.`);
         scheduleStandUpMessage(teamData.teamId, teamData); // Add or update schedules
+      } else{
+        console.log('Nothing done in update')
       }
 
       if (change.type === "removed") {

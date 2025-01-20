@@ -1,74 +1,87 @@
 import db from "../services/database";
 import { FieldValue } from "firebase-admin/firestore";
+import { WebClient } from "@slack/web-api";
+
+// Initialize Slack client
+const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 export const handleModalSubmission = async (payload: any) => {
-  // console.log("payload frm sbms:", payload);
   if (
     payload.type === "view_submission" &&
     payload.view.callback_id === "standup_submission"
   ) {
     const { standupId, teamId } = JSON.parse(payload.view.private_metadata);
-    // const teamId = payload.team.id;
     const userId = payload.user.id;
 
-    console.log("teamId from submission:", teamId);
-
-    // console.log("teamId from modal submission:", payload);
-    // console.log("userId from modal submission:", userId);
-    // console.log("standupId from modal submission:", standupId);
-
-    // Extract responses from modal submission
     const answers = Object.entries(payload.view.state.values).map(
       ([, blockData]) => {
-        const answerKey = Object.keys(blockData as object)[0]; // e.g., "answer_0"
+        console.log("Block data:", blockData);
+        const answerKey = Object.keys(blockData as object)[0];
         const typedBlockData = blockData as {
           [key: string]: { value: string };
         };
-        return typedBlockData[answerKey].value; // Return only the answer string
+        return typedBlockData[answerKey].value;
       }
     );
 
-    console.log(`Standup answers from ${userId} for team ${teamId}:`, answers);
-
-    // Current response time
+    const today = new Date().toISOString().split("T")[0];
     const responseTime = new Date().toISOString();
 
     try {
-      // Reference to the standup document
       const standupDocRef = db.collection("standups").doc(standupId);
-      // Check if the standup document exists
       const standupDoc = await standupDocRef.get();
-      console.log("reference:", standupDoc);
-      if (!standupDoc.exists) {
-        // If the document does not exist, create it with an initial structure
-        await standupDocRef.set({
-          id: standupId,
-          teamId,
-          responses: [
-            {
+
+      if (standupDoc.exists) {
+        const responses = standupDoc.data()?.responses || [];
+        const hasRespondedToday = responses.some(
+          (response: any) =>
+            response.userId === userId && response.date === today
+        );
+
+        if (hasRespondedToday) {
+          await slackClient.chat.postMessage({
+            channel: userId,
+            text: "You have already submitted your standup responses for today!",
+          });
+        } else {
+          // Add response to the database
+          await standupDocRef.update({
+            responses: FieldValue.arrayUnion({
               userId,
               response: answers,
               responseTime,
-            },
-          ],
-        });
-        console.log("Standup document created successfully!");
+              date: today,
+            }),
+          });
+
+          // Get the `ts` of the initial standup message
+          const standupMessageTs = standupDoc.data()?.messageTs;
+
+          if (standupMessageTs) {
+            // Post response in a thread
+            await slackClient.chat.postMessage({
+              channel: teamId,
+              text: `📋 *Response from <@${userId}>:*\n${answers
+                .map(
+                  (answer: string, index: number) => `Q${index + 1}: ${answer}`
+                )
+                .join("\n")}`,
+              thread_ts: standupMessageTs,
+            });
+          }
+
+          await slackClient.chat.postMessage({
+            channel: userId,
+            text: "Thank you for submitting your standup responses!",
+          });
+        }
       } else {
-        // If the document exists, update the `responses` array
-        await standupDocRef.update({
-          responses: FieldValue.arrayUnion({
-            userId,
-            response: answers,
-            responseTime,
-          }),
-        });
-        console.log("Standup response added successfully!");
+        console.error("Standup document not found.");
       }
-      console.log("Standup responses saved successfully!");
     } catch (error) {
-      console.error("Error saving standup responses:", error);
+      console.error("Error handling modal submission:", error);
     }
   } else {
-    console.log("No submission action has taken place");
+    console.log("No submission action has taken place.");
   }
 };
