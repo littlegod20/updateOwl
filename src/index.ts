@@ -7,7 +7,7 @@ import { removeMemberCommand } from "./commands/removeMemberCommand";
 import { removeTeamCommand } from "./commands/removeTeamCommand";
 import {goBack_action, goBackToManageTeams_action} from "./actions/goBack_action"
 import {viewStandups_action} from "./actions/viewStandups_action"
-import {manageTeams_action, createTeams_action, addTeamModal_action, overflowMenu_action, deleteTeam_action} from "./actions/manageTeams_action"
+import {editMemberOverflowActionListener, manageTeams_action, createTeams_action, addTeamModal_action, overflowMenu_action, deleteTeam_action, deleteStandup_action, addStandUp_action, addStandupModal_action , addNewMember_action, updateTeamName_action } from "./actions/manageTeams_action"
 import { app } from "./config/bot.config";
 import { appHome_event } from "./events/appHome_event";
 
@@ -41,10 +41,19 @@ manageTeams_action(app);
 
 createTeams_action(app);
 addTeamModal_action(app);
+updateTeamName_action(app);
+
+addNewMember_action(app);
+editMemberOverflowActionListener(app);
+
+addStandUp_action(app)
+addStandupModal_action(app)
 
 overflowMenu_action(app);
 
 deleteTeam_action(app);
+deleteStandup_action(app);
+// deleteMember_action(app);
 
 
 app.message(/hello/i, async ({ say }) => {

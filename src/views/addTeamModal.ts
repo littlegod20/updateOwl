@@ -534,24 +534,6 @@ export const addTeamModal = {
       },
       optional: true,
     },
-    // {
-    //   type: "input" as const,
-    //   block_id: "standup_time_block",
-    //   label: {
-    //     type: "plain_text",
-    //     text: "Select standup time:",
-    //   },
-    //   element: {
-    //     type: "timepicker" as const,
-    //     action_id: "standup_time",
-    //     placeholder: {
-    //       type: "plain_text",
-    //       text: "Select time",
-    //     },
-    //   },
-    //   optional: true,
-    // },
-
     {
       type: "input" as const,
       block_id: "reminder_time_block",
