@@ -6,15 +6,12 @@ const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN as string);
 
 export const handleButtonClick = async (payload: any) => {
   const teamId = payload.channel.id;
+  const userId = payload.user.id
 
-  // console.log("TeamId:", payload);
 
   try {
     // parsing standupId from the button's value
     const standupId = payload.actions[0].value.split("standup_")[1];
-
-    console.log("payloadStandupID:", payload.actions[0].value);
-    // console.log("standupId:", JSON.parse(payload.actions[0].value));
 
     // Fetch standup questions for the team from the database
     const teamDoc = await getDocumentByField("teams", "teamId", teamId);
@@ -25,10 +22,7 @@ export const handleButtonClick = async (payload: any) => {
     }
 
     const teamData = teamDoc;
-    // console.log("TeamData:", teamData);
     const standupQuestions = teamData?.teamstandupQuestions || [];
-
-    console.log("Stanup Questions:", standupQuestions);
 
     if (standupQuestions.length === 0) {
       console.log(`No standup questions configured for teamId: ${teamId}`);
@@ -40,12 +34,54 @@ export const handleButtonClick = async (payload: any) => {
       return config.id === standupId;
     });
 
-    console.log("standup Config:", standupConfig);
 
     if (!standupConfig) {
       console.error(`Standup configuration not found for ID: ${standupId}`);
       return;
     }
+
+    // Check if the user has already submitted for today
+    const today = new Date().toISOString().split("T")[0];
+    const standupDocRef = db.collection("standups").doc(standupId);
+    const standupDoc = await standupDocRef.get();
+
+
+     if (standupDoc.exists) {
+       const responses = standupDoc.data()?.responses || [];
+       const hasRespondedToday = responses.some(
+         (response: any) =>
+           response.userId === userId && response.date === today
+       );
+
+       if (hasRespondedToday) {
+         // Open a modal indicating the user has already submitted
+         await slackClient.views.open({
+           trigger_id: payload.trigger_id,
+           view: {
+             type: "modal",
+             callback_id: "standup_already_submitted",
+             title: {
+               type: "plain_text",
+               text: "Already Submitted",
+             },
+             close: {
+               type: "plain_text",
+               text: "Close",
+             },
+             blocks: [
+               {
+                 type: "section",
+                 text: {
+                   type: "mrkdwn",
+                   text: `You have already submitted your standup responses for <#${teamId}|${teamData.name}> today!`,
+                 },
+               },
+             ],
+           },
+         });
+         return;
+       }
+     }
 
     // Dynamically generate modal blocks based on fetched questions
     const modalBlocks = standupConfig.questions.map(
@@ -71,7 +107,7 @@ export const handleButtonClick = async (payload: any) => {
         callback_id: "standup_submission",
         private_metadata: JSON.stringify({
           standupId,
-          teamId:teamData.teamId,
+          teamId: teamData.teamId,
         }),
         title: {
           type: "plain_text",

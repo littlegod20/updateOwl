@@ -21,7 +21,6 @@ export const scheduleStandUpMessage = (
   teamData: TeamDocumentTypes
 ) => {
   const timezone = teamData.timeZone || "GMT";
-  // console.log("TimeZone:", timezone);
 
   if (
     !teamData.teamstandupQuestions ||
@@ -31,7 +30,6 @@ export const scheduleStandUpMessage = (
     return;
   }
 
-  // console.log("teamId:", teamId);
   // cancel existing jobs for the team
   if (scheduledJobs[teamId]) {
     Object.values(scheduledJobs[teamId])
@@ -64,8 +62,6 @@ export const scheduleStandUpMessage = (
       return;
     }
 
-    console.log("standupDays:", standupDays);
-    console.log("standupTimes:", standupTimes);
     scheduledJobs[teamId][id] = scheduledJobs[teamId][id] || [];
 
     standupDays.forEach((day: string) => {
@@ -85,10 +81,6 @@ export const scheduleStandUpMessage = (
         jobRule.minute = standUpTime.minute;
         jobRule.tz = timezone;
 
-        // console.log(
-        //   `JobRule for ${teamData.name},day: ${day}, dayOfweek: ${jobRule.dayOfWeek}:`,
-        //   jobRule
-        // );
 
         const job = schedule.scheduleJob(jobRule, async () => {
           try {
@@ -137,8 +129,7 @@ export const scheduleStandUpMessage = (
 
             const standupMessageTs = message.ts;
 
-            // Store the `ts` in a database or in-memory storage for later use
-            // Example: save to Firestore
+            // Storing the `ts` in a database for later use
             await db.collection("standups").doc(id).set(
               {
                 messageTs: standupMessageTs,
@@ -153,11 +144,6 @@ export const scheduleStandUpMessage = (
             );
           }
         });
-
-        // console.log(
-        //   `Job scheduled for ${teamData.name}, Standup ID: ${id}, Rule:`,
-        //   jobRule
-        // );
 
         scheduledJobs[teamId][id].push(job);
         console.log(

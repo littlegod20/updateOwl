@@ -15,7 +15,6 @@ export const handleModalSubmission = async (payload: any) => {
 
     const answers = Object.entries(payload.view.state.values).map(
       ([, blockData]) => {
-        console.log("Block data:", blockData);
         const answerKey = Object.keys(blockData as object)[0];
         const typedBlockData = blockData as {
           [key: string]: { value: string };
@@ -32,49 +31,36 @@ export const handleModalSubmission = async (payload: any) => {
       const standupDoc = await standupDocRef.get();
 
       if (standupDoc.exists) {
-        const responses = standupDoc.data()?.responses || [];
-        const hasRespondedToday = responses.some(
-          (response: any) =>
-            response.userId === userId && response.date === today
-        );
+        // Add response to the database
+        await standupDocRef.update({
+          responses: FieldValue.arrayUnion({
+            userId,
+            response: answers,
+            responseTime,
+            date: today,
+          }),
+        });
 
-        if (hasRespondedToday) {
+        // Get the `ts` of the initial standup message
+        const standupMessageTs = standupDoc.data()?.messageTs;
+
+        if (standupMessageTs) {
+          // Post response in a thread
           await slackClient.chat.postMessage({
-            channel: userId,
-            text: "You have already submitted your standup responses for today!",
-          });
-        } else {
-          // Add response to the database
-          await standupDocRef.update({
-            responses: FieldValue.arrayUnion({
-              userId,
-              response: answers,
-              responseTime,
-              date: today,
-            }),
-          });
-
-          // Get the `ts` of the initial standup message
-          const standupMessageTs = standupDoc.data()?.messageTs;
-
-          if (standupMessageTs) {
-            // Post response in a thread
-            await slackClient.chat.postMessage({
-              channel: teamId,
-              text: `📋 *Response from <@${userId}>:*\n${answers
-                .map(
-                  (answer: string, index: number) => `Q${index + 1}: ${answer}`
-                )
-                .join("\n")}`,
-              thread_ts: standupMessageTs,
-            });
-          }
-
-          await slackClient.chat.postMessage({
-            channel: userId,
-            text: "Thank you for submitting your standup responses!",
+            channel: teamId,
+            text: `📋 *Response from <@${userId}>:*\n${answers
+              .map(
+                (answer: string, index: number) => `Q${index + 1}: ${answer}`
+              )
+              .join("\n")}`,
+            thread_ts: standupMessageTs,
           });
         }
+
+        await slackClient.chat.postMessage({
+          channel: userId,
+          text: "Thank you for submitting your standup responses!",
+        });
       } else {
         console.error("Standup document not found.");
       }

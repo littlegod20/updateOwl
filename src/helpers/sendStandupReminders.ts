@@ -59,7 +59,7 @@ export const sendStandupReminders = async (
             console.log("memberID:", member);
             await slackClient.chat.postMessage({
               channel: member,
-              text: `Reminder: Please submit your standup reponses for today!`,
+              text: `Reminder: Please submit your standup reponses for today for <#${teamData.teamId}|${teamData.name}>`,
             });
           }
         } else {
@@ -68,10 +68,7 @@ export const sendStandupReminders = async (
       }
       return;
     }
-
-    console.log("standupDoc:", standupDoc.data());
-    console.log("responses:", standupDoc.data()?.responses);
-
+    
     // fetch responded users
     const respondedUsers = responses.map((item) => item.userId);
 
