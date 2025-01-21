@@ -5,6 +5,7 @@ import db from "../services/database";
 export const addTeams = async (
   teamName: string | null,
   memberNames: string[],
+  admins: string[],
   timeZone: string,
   client: WebClient,
   savedStandups: any[]
@@ -86,6 +87,7 @@ export const addTeams = async (
     await teamRef.set({
       teamId: result.channel.id,
       name: teamName,
+      admins: admins,
       members,
       teamstandupQuestions: formattedStandups,
       timeZone: timeZone,
