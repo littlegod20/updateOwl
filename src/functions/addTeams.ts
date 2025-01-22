@@ -8,10 +8,9 @@ export const addTeams = async (
   admins: string[],
   timeZone: string,
   client: WebClient,
-  savedStandups: any[]
+  standup: any[]
 ) => {
   try {
-
     // let questionsArray:string[] = [];
 
     if (!teamName) {
@@ -22,14 +21,6 @@ export const addTeams = async (
       throw new Error("No valid memberNames provided");
     }
 
-    // if(standupQuestions){
-    //   // Check if standupQuestions contains a newline character
-    //   questionsArray = standupQuestions.includes('\n')
-    //   ? standupQuestions.split('\n')  // Split by newline if it exists
-    //   : [standupQuestions];            // Create an array with the single question
-
-    //   console.log(questionsArray); // Output the resulting array
-    // }
 
     console.log("Member Names", memberNames);
 
@@ -71,17 +62,6 @@ export const addTeams = async (
       }
     }
 
-
-    // Format the teamstandupQuestions array from saved standups
-    const formattedStandups = savedStandups.map(standup => ({
-      id: standup.id,
-      questions: standup.questions,
-      standupDays: standup.standupDays,
-      standupTimes: standup.standupTimes,
-      // timeZone: standup.timeZone,
-      reminderTimes: standup.reminderTimes
-    }));
-
     // Store the team details in the database
     const teamRef = db.collection("teams").doc();
     await teamRef.set({
@@ -89,7 +69,7 @@ export const addTeams = async (
       name: teamName,
       admins: admins,
       members,
-      teamstandupQuestions: formattedStandups,
+      teamstandupQuestions: standup,
       timeZone: timeZone,
       // Keep schedule field for backward compatibility
       // schedule: formattedStandups[0] ? `${formattedStandups[0].standupTime} ${formattedStandups[0].timeZone}` : "",
@@ -101,11 +81,17 @@ export const addTeams = async (
         success: true,
         teamId: result.channel.id,
         channelId: result.channel.id as string,
-        message: `Team created, but failed to invite some users: ${failedInvites.join(", ")}`,
+        message: `Team created, but failed to invite some users: ${failedInvites.join(
+          ", "
+        )}`,
       };
     }
 
-    return { success: true, teamId: result.channel.id, channelId: result.channel.id as string };
+    return {
+      success: true,
+      teamId: result.channel.id,
+      channelId: result.channel.id as string,
+    };
   } catch (error) {
     console.error("Error adding team:", error);
     return { success: false, error };
