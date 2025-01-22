@@ -3,24 +3,16 @@ import dotenv from "dotenv";
 import { registerAddTeamCommand } from "./commands/addTeamCommand";
 import { removeMemberCommand } from "./commands/removeMemberCommand";
 import { removeTeamCommand } from "./commands/removeTeamCommand";
-import {
-  goBack_action,
-  goBackToManageTeams_action,
-} from "./actions/goBack_action";
-import { viewStandups_action } from "./actions/viewStandups_action";
-import {
-  manageTeams_action,
-  createTeams_action,
-  addTeamModal_action,
-  overflowMenu_action,
-  deleteTeam_action,
-} from "./actions/manageTeams_action";
+import {goBack_action, goBackToManageTeams_action} from "./actions/goBack_action"
+import {viewStandups_action} from "./actions/viewStandups_action"
+import {editMemberOverflowActionListener, manageTeams_action, createTeams_action, addTeamModal_action, overflowMenu_action, deleteTeam_action, deleteStandup_action, addStandUp_action, addStandupModal_action , addNewMember_action, updateTeamName_action } from "./actions/manageTeams_action"
 import { app } from "./config/bot.config";
 import { appHome_event } from "./events/appHome_event";
 import { initializeSchedules } from "./functions/initializeSchedules";
 import { listenForTeamUpdates } from "./helpers/listenForTeamUpdates";
 import { handleButtonClick } from "./helpers/handleButtonClick";
 import { handleModalSubmission } from "./helpers/handleModalSubmission";
+import { handleAddQuestion } from "./helpers/handleAddQuestion";
 
 dotenv.config();
 
@@ -48,22 +40,33 @@ manageTeams_action(app);
 
 createTeams_action(app);
 addTeamModal_action(app);
+updateTeamName_action(app);
+
+addNewMember_action(app);
+editMemberOverflowActionListener(app);
+
+addStandUp_action(app)
+addStandupModal_action(app)
 
 overflowMenu_action(app);
 
 deleteTeam_action(app);
+deleteStandup_action(app);
+// deleteMember_action(app);
 
-// Listen for button clicks
-app.action(/^submit_standup_.*/, async ({ ack, body }) => {
+app.action("add_question", async ({ ack, body, client }) => {
+  // Acknowledge the action
   await ack();
-  await handleButtonClick(body);
+
+  // Extract the current blocks from the modal
+  const view = (body as any).view; // The current modal view\
+  console.log(view)
+  const existingBlocks = view.blocks; // Blocks currently in the modal
+
+  // Call handleAddQuestion to update the modal
+  await handleAddQuestion(view, client, existingBlocks);
 });
 
-// Listen for modal submissions
-app.view("standup_submission", async ({ ack, body }) => {
-  await ack();
-  await handleModalSubmission(body);
-});
 
 app.message(/hello/i, async ({ say }) => {
   try {
