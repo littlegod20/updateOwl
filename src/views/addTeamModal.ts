@@ -411,23 +411,46 @@ export const addTeamModal = {
       optional: true,
     },
     {
-      type: "input" as const,
-      block_id: "standup_questions_block",
-      label: {
-        type: "plain_text",
-        text: "Enter custom standup questions (separated by commas or new lines):",
+      type: "section",
+      block_id: "questions_section",
+      text: {
+        type: "mrkdwn",
+        text: "*Standup Questions and Formats*",
       },
-      element: {
-        type: "plain_text_input" as const,
-        action_id: "standup_questions",
-        multiline: true,
-        placeholder: {
-          type: "plain_text",
-          text: "e.g., What did you accomplish yesterday?\nWhat will you work on today?\nAny blockers?",
-        },
-      },
-      optional: true,
     },
+    {
+      type: "actions",
+      block_id: "add_question_button_block",
+      elements: [
+        {
+          type: "button",
+          action_id: "add_question",
+          text: {
+            type: "plain_text",
+            text: "Add Another Question",
+          },
+          style: "primary",
+        },
+      ],
+    },
+    // {
+    //   type: "input" as const,
+    //   block_id: "standup_questions_block",
+    //   label: {
+    //     type: "plain_text",
+    //     text: "Enter custom standup questions (separated by commas or new lines):",
+    //   },
+    //   element: {
+    //     type: "plain_text_input" as const,
+    //     action_id: "standup_questions",
+    //     multiline: true,
+    //     placeholder: {
+    //       type: "plain_text",
+    //       text: "e.g., What did you accomplish yesterday?\nWhat will you work on today?\nAny blockers?",
+    //     },
+    //   },
+    //   optional: true,
+    // },
     {
       type: "input" as const,
       block_id: "standup_day_block",
@@ -483,53 +506,53 @@ export const addTeamModal = {
         },
         options: [
           {
-            "text": { "type": "plain_text", "text": "09:00 AM" },
-            "value": "09:00"
+            text: { type: "plain_text", text: "09:00 AM" },
+            value: "09:00",
           },
           {
-            "text": { "type": "plain_text", "text": "10:00 AM" },
-            "value": "10:00"
+            text: { type: "plain_text", text: "10:00 AM" },
+            value: "10:00",
           },
           {
-            "text": { "type": "plain_text", "text": "11:00 AM" },
-            "value": "11:00"
+            text: { type: "plain_text", text: "11:00 AM" },
+            value: "11:00",
           },
           {
-            "text": { "type": "plain_text", "text": "12:00 PM" },
-            "value": "12:00"
+            text: { type: "plain_text", text: "12:00 PM" },
+            value: "12:00",
           },
           {
-            "text": { "type": "plain_text", "text": "01:00 PM" },
-            "value": "13:00"
+            text: { type: "plain_text", text: "01:00 PM" },
+            value: "13:00",
           },
           {
-            "text": { "type": "plain_text", "text": "02:00 PM" },
-            "value": "14:00"
+            text: { type: "plain_text", text: "02:00 PM" },
+            value: "14:00",
           },
           {
-            "text": { "type": "plain_text", "text": "03:00 PM" },
-            "value": "15:00"
+            text: { type: "plain_text", text: "03:00 PM" },
+            value: "15:00",
           },
           {
-            "text": { "type": "plain_text", "text": "04:00 PM" },
-            "value": "16:00"
+            text: { type: "plain_text", text: "04:00 PM" },
+            value: "16:00",
           },
           {
-            "text": { "type": "plain_text", "text": "05:00 PM" },
-            "value": "17:00"
+            text: { type: "plain_text", text: "05:00 PM" },
+            value: "17:00",
           },
           {
-            "text": { "type": "plain_text", "text": "06:00 PM" },
-            "value": "18:00"
+            text: { type: "plain_text", text: "06:00 PM" },
+            value: "18:00",
           },
           {
-            "text": { "type": "plain_text", "text": "07:00 PM" },
-            "value": "19:00"
+            text: { type: "plain_text", text: "07:00 PM" },
+            value: "19:00",
           },
           {
-            "text": { "type": "plain_text", "text": "08:00 PM" },
-            "value": "20:00"
-          }
+            text: { type: "plain_text", text: "08:00 PM" },
+            value: "20:00",
+          },
         ],
       },
       optional: true,
