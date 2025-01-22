@@ -233,7 +233,7 @@ export const publishEditTeamView = async (
     user_id: string,
     teamId: string
   ) => {
-    try {
+    try { 
       const team: Team = await getTeamByID(teamId);
 
         // Fetch member names based on their IDs
@@ -278,61 +278,70 @@ export const publishEditTeamView = async (
   
       const standupBlocks: any[] = team.teamstandupQuestions.map((standup, index) => {
         const isLast = index === team.teamstandupQuestions.length - 1;
+        // console.log("standup.questions:", standup.questions);
         return [
-        {
+          {
             type: "section",
             text: {
-                type: "mrkdwn", // Change to mrkdwn for Markdown support
-                text: `*Standup ${index + 1}*`, // This will make "Standup 1" bold
+              type: "mrkdwn", // Change to mrkdwn for Markdown support
+              text: `*Standup ${index + 1}*`, // This will make "Standup 1" bold
             },
             accessory: {
-                type: "overflow",
-                options: [
+              type: "overflow",
+              options: [
                 {
-                    text: {
+                  text: {
                     type: "plain_text",
                     text: "Delete Standup",
                     emoji: true,
-                    },
-                    value: `delete_standup_${index}`,
+                  },
+                  value: `delete_standup_${index}`,
                 },
-                ],
-                action_id: `delete_standup_${index}`,
+              ],
+              action_id: `delete_standup_${index}`,
             },
-        },              
-        {
-          type: "section",
-          fields: [
-            {
-              type: "mrkdwn",
-              text: `*Questions:* \n- ${standup.questions.join("\n- ")}`,
-            },
-            {
-              type: "mrkdwn",
-              text: `*Reminder Times:* ${standup.reminderTimes.join(", ")}`,
-            },
-          ],
-        },
-        {
-          type: "section",
-          fields: [
-            {
-              type: "mrkdwn",
-              text: `*Standup Days:* ${standup.standupDays.join(", ")}`,
-            },
-            {
-              type: "mrkdwn",
-              text: `*Standup Times:* ${standup.standupTimes.join(", ")}`,
-            },
-          ],
-
-        },
-        !isLast
-        ? {
-            type: "divider",
-          }
-        : null,
-      ].filter(Boolean); // Filter out `null` if it's the last standup
+          },
+          {
+            type: "section",
+            fields: [
+              {
+                type: "mrkdwn",
+                text: `*Questions:* \n${standup.questions
+                  .map((item, index) => {
+                    // Remove JSON.parse if `item` is already an object
+                    const parsedItem =
+                      typeof item === "string" ? JSON.parse(item) : item;
+                    return `${index + 1}. [question: ${
+                      parsedItem.question
+                    }, format: ${parsedItem.format}]`;
+                  })
+                  .join("\n")}`,
+              },
+              {
+                type: "mrkdwn",
+                text: `*Reminder Times:* ${standup.reminderTimes.join(", ")}`,
+              },
+            ],
+          },
+          {
+            type: "section",
+            fields: [
+              {
+                type: "mrkdwn",
+                text: `*Standup Days:* ${standup.standupDays.join(", ")}`,
+              },
+              {
+                type: "mrkdwn",
+                text: `*Standup Times:* ${standup.standupTimes.join(", ")}`,
+              },
+            ],
+          },
+          !isLast
+            ? {
+                type: "divider",
+              }
+            : null,
+        ].filter(Boolean); // Filter out `null` if it's the last standup
      }).flat();
   
       await client.views.publish({

@@ -1,6 +1,6 @@
 interface StandUpQuestionsTypes {
   id: string;
-  questions: string[];
+  questions: { format: string; question: string }[];
   reminderTimes: string[];
   standupTimes: string[];
   standupDays: string[];

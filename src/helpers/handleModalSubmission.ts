@@ -13,13 +13,30 @@ export const handleModalSubmission = async (payload: any) => {
     const { standupId, teamId } = JSON.parse(payload.view.private_metadata);
     const userId = payload.user.id;
 
+    console.log("standupId:", standupId);
+
+    console.log("userId:", userId);
+
+    // Extract answers dynamically based on input type
     const answers = Object.entries(payload.view.state.values).map(
-      ([, blockData]) => {
-        const answerKey = Object.keys(blockData as object)[0];
-        const typedBlockData = blockData as {
-          [key: string]: { value: string };
-        };
-        return typedBlockData[answerKey].value;
+      ([blockId, blockData]) => {
+        const actionId = Object.keys(blockData as object)[0];
+        const inputData = (blockData as any)[actionId];
+
+        // Handle different input types (plain_text_input, static_select, etc.)
+        if (inputData.type === "plain_text_input") {
+          return {
+            questionId: blockId,
+            answer: inputData.value,
+          };
+        } else if (inputData.type === "static_select") {
+          return {
+            questionId: blockId,
+            answer: inputData.selected_option?.value,
+          };
+        } else {
+          return { questionId: blockId, answer: null }; // Handle other cases if needed
+        }
       }
     );
 
@@ -50,7 +67,8 @@ export const handleModalSubmission = async (payload: any) => {
             channel: teamId,
             text: `📋 *Response from <@${userId}>:*\n${answers
               .map(
-                (answer: string, index: number) => `Q${index + 1}: ${answer}`
+                (answer, index) =>
+                  `Q${index + 1}: ${answer.answer || "No response"}`
               )
               .join("\n")}`,
             thread_ts: standupMessageTs,

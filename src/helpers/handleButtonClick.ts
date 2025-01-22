@@ -6,7 +6,7 @@ const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN as string);
 
 export const handleButtonClick = async (payload: any) => {
   const teamId = payload.channel.id;
-  const userId = payload.user.id
+  const userId = payload.user.id;
 
 
   try {
@@ -34,7 +34,6 @@ export const handleButtonClick = async (payload: any) => {
       return config.id === standupId;
     });
 
-
     if (!standupConfig) {
       console.error(`Standup configuration not found for ID: ${standupId}`);
       return;
@@ -45,81 +44,127 @@ export const handleButtonClick = async (payload: any) => {
     const standupDocRef = db.collection("standups").doc(standupId);
     const standupDoc = await standupDocRef.get();
 
+    if (standupDoc.exists) {
+      const responses = standupDoc.data()?.responses || [];
+      const hasRespondedToday = responses.some(
+        (response: any) => response.userId === userId && response.date === today
+      );
 
-     if (standupDoc.exists) {
-       const responses = standupDoc.data()?.responses || [];
-       const hasRespondedToday = responses.some(
-         (response: any) =>
-           response.userId === userId && response.date === today
-       );
-
-       if (hasRespondedToday) {
-         // Open a modal indicating the user has already submitted
-         await slackClient.views.open({
-           trigger_id: payload.trigger_id,
-           view: {
-             type: "modal",
-             callback_id: "standup_already_submitted",
-             title: {
-               type: "plain_text",
-               text: "Already Submitted",
-             },
-             close: {
-               type: "plain_text",
-               text: "Close",
-             },
-             blocks: [
-               {
-                 type: "section",
-                 text: {
-                   type: "mrkdwn",
-                   text: `You have already submitted your standup responses for <#${teamId}|${teamData.name}> today!`,
-                 },
-               },
-             ],
-           },
-         });
-         return;
-       }
-     }
+      if (hasRespondedToday) {
+        // Open a modal indicating the user has already submitted
+        await slackClient.views.open({
+          trigger_id: payload.trigger_id,
+          view: {
+            type: "modal",
+            callback_id: "standup_already_submitted",
+            title: {
+              type: "plain_text",
+              text: "Already Submitted",
+            },
+            close: {
+              type: "plain_text",
+              text: "Close",
+            },
+            blocks: [
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: `You have already submitted your standup responses for <#${teamId}|${teamData.name}> today!`,
+                },
+              },
+            ],
+          },
+        });
+        return;
+      }
+    }
 
     // Dynamically generate modal blocks based on fetched questions
-    const modalBlocks = standupConfig.questions.map(
-      (question: string, index: number) => ({
-        type: "input",
-        block_id: `question_${index}`,
-        element: {
-          type: "plain_text_input",
-          action_id: `answer_${index}`,
-        },
-        label: {
-          type: "plain_text",
-          text: question,
-        },
-      })
-    );
+   const modalBlocks = standupConfig.questions.map((item, index: number) => {
+     let element;
 
-    // Open the modal with dynamically generated blocks
-    await slackClient.views.open({
-      trigger_id: payload.trigger_id,
-      view: {
-        type: "modal",
-        callback_id: "standup_submission",
-        private_metadata: JSON.stringify({
-          standupId,
-          teamId: teamData.teamId,
-        }),
-        title: {
-          type: "plain_text",
-          text: "Submit Your Standup",
-        },
-        blocks: modalBlocks,
-        submit: {
-          type: "plain_text",
-          text: "Submit",
-        },
-      },
-    });
+     // Customize the element based on the format
+     switch (item.format) {
+       case "text":
+         element = {
+           type: "plain_text_input",
+           action_id: `answer_${index}`,
+         };
+         break;
+
+       case "number":
+         element = {
+           type: "plain_text_input",
+           action_id: `answer_${index}`,
+           // Add placeholder or validation for numeric input if needed
+           placeholder: {
+             type: "plain_text",
+             text: "Enter a number",
+           },
+         };
+         break;
+
+      //  case "select":
+      //    element = {
+      //      type: "static_select",
+      //      action_id: `answer_${index}`,
+      //      placeholder: {
+      //        type: "plain_text",
+      //        text: "Choose an option",
+      //      },
+      //      options: item.options.map((option: string) => ({
+      //        text: {
+      //          type: "plain_text",
+      //          text: option,
+      //        },
+      //        value: option,
+      //      })),
+      //    };
+      //    break;
+
+       default:
+         // Default to plain_text_input if the format is unknown
+         element = {
+           type: "plain_text_input",
+           action_id: `answer_${index}`,
+         };
+         break;
+     }
+
+     return {
+       type: "input",
+       block_id: `question_${index}`,
+       element: element,
+       label: {
+         type: "plain_text",
+         text: item.question,
+       },
+     };
+   });
+
+   // Open the modal with dynamically generated blocks
+   await slackClient.views.open({
+     trigger_id: payload.trigger_id,
+     view: {
+       type: "modal",
+       callback_id: "standup_submission",
+       private_metadata: JSON.stringify({
+         standupId,
+         teamId: teamData.teamId,
+       }),
+       title: {
+         type: "plain_text",
+         text: "Submit Your Standup",
+       },
+       blocks: modalBlocks,
+       submit: {
+         type: "plain_text",
+         text: "Submit",
+       },
+     },
+   });
+
   } catch (error) {
     console.error("Error handling button click:", error);
   }
