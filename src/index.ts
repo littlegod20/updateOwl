@@ -7,6 +7,9 @@ import { removeMemberCommand } from "./commands/removeMemberCommand";
 import { removeTeamCommand } from "./commands/removeTeamCommand";
 import {goBack_action, goBackToManageTeams_action} from "./actions/goBack_action"
 import {viewStandups_action} from "./actions/viewStandups_action"
+import {viewAnalytics_action} from "./actions/viewAnalytics_action"
+import {handleStandupDashboardActions } from "./actions/handleStandupActions_action"
+import {handleAnalyticsActions } from "./actions/handleAnalyticsActions_action"
 import {editMemberOverflowActionListener, manageTeams_action, createTeams_action, addTeamModal_action, overflowMenu_action, deleteTeam_action, deleteStandup_action, addStandUp_action, addStandupModal_action , addNewMember_action, updateTeamName_action } from "./actions/manageTeams_action"
 import { app } from "./config/bot.config";
 import { appHome_event } from "./events/appHome_event";
@@ -36,6 +39,10 @@ goBack_action(app)
 goBackToManageTeams_action(app);
 
 viewStandups_action(app);
+handleStandupDashboardActions(app);
+
+viewAnalytics_action(app);
+handleAnalyticsActions(app);
 
 manageTeams_action(app);
 

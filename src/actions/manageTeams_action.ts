@@ -1,5 +1,5 @@
 import { App, UsersSelectAction, ViewSubmitAction  } from "@slack/bolt";
-import { ConversationsInfoResponse, ModalView, InputBlock, PlainTextInput, MultiStaticSelect,MultiUsersSelect, StaticSelect, SectionBlock } from '@slack/web-api';
+import { Block, ModalView, InputBlock, PlainTextInput, MultiStaticSelect,MultiUsersSelect, StaticSelect, SectionBlock } from '@slack/web-api';
 import { addTeams } from "../functions/addTeams";
 import { deleteTeamByID } from "../functions/deleteTeamByID";
 import { updateTeamByID } from "../functions/updateTeamByID";
@@ -257,17 +257,6 @@ export const addTeamModal_action = (app: App) => {
         errors["team_name_block"] = "Please enter a team name.";
         throw new Error("Team name is empty");
       }
-      
-      // if (!standupQuestions) {
-      //   errors["standup_questions_block"] = "Please enter at least one standup question.";
-      //   throw new Error("StandUp Questions is empty");
-      // }
-      
-      // if (!standupTime) {
-
-      //   errors["standup_time_block"] = "Please select a time for the standup.";
-      //   throw new Error("Please Select A StandUp Time");
-      // }
   
       if (!timeZone) {
         errors["time_zone_block"] = "Please select a time zone.";

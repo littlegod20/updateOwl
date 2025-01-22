@@ -150,6 +150,15 @@ export const publishManageTeamsView = async (client: WebClient, user_id: string)
                                 },
                                 "initial_channel": "C12345678",
                                 "action_id": "actionId-2"
+                            },
+                            {
+                                type: "button",
+                                text: {
+                                  type: "plain_text",
+                                  text: "Apply Filters",
+                                  emoji: true
+                                },
+                                action_id: "apply_team_filters"
                             }
                         ]
                     },
