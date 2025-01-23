@@ -168,6 +168,24 @@ export const publishAnalyticsView = async (client: WebClient, user_id: string) =
       {
         type: "divider"
       },
+        // Response Trends Chart
+        {
+            type: "section",
+            text: {
+                type: "mrkdwn",
+                text: "*📈 Response Trends*"
+            }
+            },
+        //   {
+        //     type: "image",
+        //     image_url: `https://your-chart-service.com/generate-trend-chart?data=${encodeURIComponent(
+        //       JSON.stringify(stats.responseTrends)
+        //     )}`,
+        //     alt_text: "Response Trends Chart"
+        //   },
+            {
+            type: "divider"
+            },
       // Top Performing Teams Section
       {
         type: "section",
@@ -204,8 +222,27 @@ export const publishAnalyticsView = async (client: WebClient, user_id: string) =
       {
         type: "divider"
       },
+      
+      // Frequent Blockers Section
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "*🚧 Frequent Blockers*"
+        }
+      },
+      ...stats.frequentBlockers.map((blocker) => ({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${blocker.userName}*\nBlockers Reported: ${blocker.blockerCount}`
+        }
+      })),
+      {
+        type: "divider"
+      },
       // Team Reports
-    {
+      {
         type: "section",
         text: {
           type: "mrkdwn",
@@ -254,42 +291,6 @@ export const publishAnalyticsView = async (client: WebClient, user_id: string) =
       {
         type: "divider"
       },
-      // Frequent Blockers Section
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "*🚧 Frequent Blockers*"
-        }
-      },
-      ...stats.frequentBlockers.map((blocker) => ({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*${blocker.userName}*\nBlockers Reported: ${blocker.blockerCount}`
-        }
-      })),
-      {
-        type: "divider"
-      },
-      // Response Trends Chart
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "*📈 Response Trends*"
-        }
-      },
-    //   {
-    //     type: "image",
-    //     image_url: `https://your-chart-service.com/generate-trend-chart?data=${encodeURIComponent(
-    //       JSON.stringify(stats.responseTrends)
-    //     )}`,
-    //     alt_text: "Response Trends Chart"
-    //   },
-      {
-        type: "divider"
-      },
       // Export and Filter Controls
       {
         type: "actions",
@@ -304,15 +305,15 @@ export const publishAnalyticsView = async (client: WebClient, user_id: string) =
             style: "primary",
             action_id: "export_analytics"
           },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Apply Filters",
-              emoji: true
-            },
-            action_id: "apply_filters"
-          }
+        //   {
+        //     type: "button",
+        //     text: {
+        //       type: "plain_text",
+        //       text: "Apply Filters",
+        //       emoji: true
+        //     },
+        //     action_id: "apply_filters"
+        //   }
         ]
       }
     ];

@@ -76,44 +76,44 @@ export const publishHomeView = async (client: WebClient,userName: string, user_i
 
 
 
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: "Welcome to your dashboard! Please select an option from the dropdown below:",
-            },
-            accessory: {
-              type: "static_select",
-              placeholder: {
-                type: "plain_text",
-                text: "Choose an option",
-              },
-              options: [
-                {
-                  text: {
-                    type: "plain_text",
-                    text: "View Today's Standup",
-                  },
-                  value: "today_standup",
-                },
-                {
-                  text: {
-                    type: "plain_text",
-                    text: "View Blockers",
-                  },
-                  value: "view_blockers",
-                },
-                {
-                  text: {
-                    type: "plain_text",
-                    text: "See Team Progress",
-                  },
-                  value: "team_progress",
-                },
-              ],
-              action_id: "select_dashboard_option",
-            },
-          },
+          // {
+          //   type: "section",
+          //   text: {
+          //     type: "mrkdwn",
+          //     text: "Welcome to your dashboard! Please select an option from the dropdown below:",
+          //   },
+          //   accessory: {
+          //     type: "static_select",
+          //     placeholder: {
+          //       type: "plain_text",
+          //       text: "Choose an option",
+          //     },
+          //     options: [
+          //       {
+          //         text: {
+          //           type: "plain_text",
+          //           text: "View Today's Standup",
+          //         },
+          //         value: "today_standup",
+          //       },
+          //       {
+          //         text: {
+          //           type: "plain_text",
+          //           text: "View Blockers",
+          //         },
+          //         value: "view_blockers",
+          //       },
+          //       {
+          //         text: {
+          //           type: "plain_text",
+          //           text: "See Team Progress",
+          //         },
+          //         value: "team_progress",
+          //       },
+          //     ],
+          //     action_id: "select_dashboard_option",
+          //   },
+          // },
         ],
       },
     });
