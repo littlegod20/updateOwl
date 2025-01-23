@@ -1,30 +1,52 @@
-import { WebClient } from "@slack/web-api";
+import { ModalView, WebClient } from "@slack/web-api";
 import { addTeamModal } from "./addTeamModal";
 import { getTeamByID } from "../functions/getTeamByID";
 import { getAllTeams } from "../functions/getAllTeams";
 import { standUpModal } from "./standUpModal";
 
 
+// interface Team {
+//     id: string;
+//     createdAt: string; // ISO 8601 date string
+//     members: string[]; // Array of user IDs
+//     admins: string[];
+//     name: string; // Team name
+//     teamId: string; // Unique team identifier
+//     teamstandupQuestions: StandupQuestion[]; // Array of standup questions
+//     // reminderTimes: string[]; // Array of reminder times as strings
+//     // standupDays: string[]; // Array of standup days as strings
+//     // standupTimes: string[]; // Array of standup times as strings
+//     timeZone: string; // Time zone string
+// }
+
+// interface StandupQuestion {
+//     id: string; // Unique identifier for the question set
+//     questions: string[]; // Array of questions
+//     reminderTimes: string[]; // Array of reminder times as strings
+//     standupDays: string[]; // Array of standup days as strings
+//     standupTimes: string[]; // Array of standup times as strings
+// }
+
 interface Team {
-    id: string;
-    createdAt: string; // ISO 8601 date string
-    members: string[]; // Array of user IDs
-    admins: string[];
-    name: string; // Team name
-    teamId: string; // Unique team identifier
-    teamstandupQuestions: StandupQuestion[]; // Array of standup questions
-    // reminderTimes: string[]; // Array of reminder times as strings
-    // standupDays: string[]; // Array of standup days as strings
-    // standupTimes: string[]; // Array of standup times as strings
-    timeZone: string; // Time zone string
+  name: string;
+  admins: string[];
+  members: string[];
+  timeZone: string; // Default value can be handled elsewhere
+  teamstandupQuestions: teamstandupQuestion;
 }
 
-interface StandupQuestion {
-    id: string; // Unique identifier for the question set
-    questions: string[]; // Array of questions
-    reminderTimes: string[]; // Array of reminder times as strings
-    standupDays: string[]; // Array of standup days as strings
-    standupTimes: string[]; // Array of standup times as strings
+interface teamstandupQuestion  {
+    standupDays: string[]; // Assuming standupDays is an array of strings
+    standupTimes: string[]; // Assuming standupTimes is an array of strings
+    reminderTimes: string[]; // Assuming reminderTimes is an array of strings
+    questions: Question[]; // Array of Question objects}
+}
+
+interface Question {
+  format: string; // Assuming questionFormat is a string
+  text: string; // Assuming questionText is a string
+  options: string[]; // Array of options derived from questionOptions
+  required: boolean; // Boolean indicating if the question is required
 }
 
 
@@ -150,66 +172,17 @@ export const publishManageTeamsView = async (client: WebClient, user_id: string)
                                 },
                                 "initial_channel": "C12345678",
                                 "action_id": "actionId-2"
+                            },
+                            {
+                                type: "button",
+                                text: {
+                                  type: "plain_text",
+                                  text: "Apply Filters",
+                                  emoji: true
+                                },
+                                action_id: "apply_team_filters"
                             }
                         ]
-                    },
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "DEVELOPER TEAM."
-                        },
-                        "accessory": {
-                            "type": "overflow",
-                            "options": [
-                                {
-                                    "text": {
-                                        "type": "plain_text",
-                                        "text": "*Edit Team*",
-                                        "emoji": true
-                                    },
-                                    "value": "value-0"
-                                },
-                                {
-                                    "text": {
-                                        "type": "plain_text",
-                                        "text": "*Delete Team*",
-                                        "emoji": true
-                                    },
-                                    "value": "value-1"
-                                }
-                            ],
-                            "action_id": "overflow-action"
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "QA/PM TEAM."
-                        },
-                        "accessory": {
-                            "type": "overflow",
-                            "options": [
-                                {
-                                    "text": {
-                                        "type": "plain_text",
-                                        "text": "*Edit Team*",
-                                        "emoji": true
-                                    },
-                                    "value": "value-0"
-                                },
-                                {
-                                    "text": {
-                                        "type": "plain_text",
-                                        "text": "*Delete Team*",
-                                        "emoji": true
-                                    },
-                                    "value": "value-1"
-                                }
-                            ],
-                            "action_id": "overflow-action"
-                        }
                     },
                     ...teamSections
                 ],
@@ -276,74 +249,6 @@ export const publishEditTeamView = async (
         );
         
   
-      const standupBlocks: any[] = team.teamstandupQuestions.map((standup, index) => {
-        const isLast = index === team.teamstandupQuestions.length - 1;
-        // console.log("standup.questions:", standup.questions);
-        return [
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn", // Change to mrkdwn for Markdown support
-              text: `*Standup ${index + 1}*`, // This will make "Standup 1" bold
-            },
-            accessory: {
-              type: "overflow",
-              options: [
-                {
-                  text: {
-                    type: "plain_text",
-                    text: "Delete Standup",
-                    emoji: true,
-                  },
-                  value: `delete_standup_${index}`,
-                },
-              ],
-              action_id: `delete_standup_${index}`,
-            },
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*Questions:* \n${standup.questions
-                  .map((item, index) => {
-                    // Remove JSON.parse if `item` is already an object
-                    const parsedItem =
-                      typeof item === "string" ? JSON.parse(item) : item;
-                    return `${index + 1}. [question: ${
-                      parsedItem.question
-                    }, format: ${parsedItem.format}]`;
-                  })
-                  .join("\n")}`,
-              },
-              {
-                type: "mrkdwn",
-                text: `*Reminder Times:* ${standup.reminderTimes.join(", ")}`,
-              },
-            ],
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*Standup Days:* ${standup.standupDays.join(", ")}`,
-              },
-              {
-                type: "mrkdwn",
-                text: `*Standup Times:* ${standup.standupTimes.join(", ")}`,
-              },
-            ],
-          },
-          !isLast
-            ? {
-                type: "divider",
-              }
-            : null,
-        ].filter(Boolean); // Filter out `null` if it's the last standup
-     }).flat();
-  
       await client.views.publish({
         user_id: user_id,
         view: {
@@ -360,7 +265,7 @@ export const publishEditTeamView = async (
                     text: "Go Back",
                     emoji: true,
                   },
-                  action_id: "go_back",
+                  action_id: "go_back_to_manage_teams_view",
                 },
               ],
             },
@@ -422,64 +327,7 @@ export const publishEditTeamView = async (
                     "action_id": "users_select-action"
                 }
             },
-            // {
-            //     "type": "section",
-            //     "text": {
-            //         "type": "mrkdwn",
-            //         "text": "John Clarke Asante"
-            //     },
-            //     "accessory": {
-            //         "type": "overflow",
-            //         "options": [
-            //             {
-            //                 "text": {
-            //                     "type": "plain_text",
-            //                     "text": "Assign Administrator Role",
-            //                     "emoji": true
-            //                 },
-            //                 "value": "value-0"
-            //             },
-            //             {
-            //                 "text": {
-            //                     "type": "plain_text",
-            //                     "text": "Delete Member",
-            //                     "emoji": true
-            //                 },
-            //                 "value": "value-1"
-            //             }
-            //         ],
-            //         "action_id": "overflow-action"
-            //     }
-            // },
-            // {
-            //     "type": "section",
-            //     "text": {
-            //         "type": "mrkdwn",
-            //         "text": "Theophilus Asante"
-            //     },
-            //     "accessory": {
-            //         "type": "overflow",
-            //         "options": [
-            //             {
-            //                 "text": {
-            //                     "type": "plain_text",
-            //                     "text": "Assign Administrator Role",
-            //                     "emoji": true
-            //                 },
-            //                 "value": "value-0"
-            //             },
-            //             {
-            //                 "text": {
-            //                     "type": "plain_text",
-            //                     "text": "Delete",
-            //                     "emoji": true
-            //                 },
-            //                 "value": "value-1"
-            //             }
-            //         ],
-            //         "action_id": "overflow-action"
-            //     }
-            // },
+            
             ...teamMembers,
             {
               type: "divider",
@@ -488,47 +336,83 @@ export const publishEditTeamView = async (
                 type: "header",
                 text: {
                   type: "plain_text",
-                  text: `Team Standups`,
+                  text: `Team Standup`,
                   emoji: true,
                 },
             },
             {
                 type: "section",
                 text: {
-                  type: "mrkdwn",
-                  text: "Click the button below to add a new standup.",
+                  type: "mrkdwn", // Change to mrkdwn for Markdown support
+                  text: `*Team Standup*`, // This will make "Standup 1" bold
                 },
-                accessory: {
-                  type: "button",
-                  text: {
-                    type: "plain_text",
-                    text: "Add New Standup",
-                    emoji: true,
+                // accessory: {
+                //   type: "overflow",
+                //   options: [
+                //     {
+                //       text: {
+                //         type: "plain_text",
+                //         text: "Delete Standup",
+                //         emoji: true,
+                //       },
+                //       value: `delete_standup_${index}`,
+                //     },
+                //   ],
+                //   action_id: `delete_standup_${index}`,
+                // },
+              },
+              {
+                type: "section",
+                fields: [
+                  {
+                    type: "mrkdwn",
+                    text: `*Questions:* \n${team.teamstandupQuestions.questions
+                      .map((item, index) => {
+                        // Ensure item is parsed correctly
+                        const parsedItem = typeof item === "string" ? JSON.parse(item) : item;
+                        return `${index + 1}. *${parsedItem.text}*\n    - *Type:* ${parsedItem.type}\n    - *Required:* ${parsedItem.required ? "Yes" : "No"}${
+                          parsedItem.options?.length
+                            ? `\n    - *Options:* ${parsedItem.options.join(", ")}`
+                            : ""
+                        }`;
+                      })
+                      .join("\n\n")}`,
                   },
-                  action_id: "add_standup",
-                },
-            },
-            ...standupBlocks,
-
-            // {
-            //   type: "divider",
-            // },
-            // {
-            //   type: "section",
-            //   text: {
-            //     type: "mrkdwn",
-            //     text: "Click the submit button to save changes.",
-            //   },
-            //   accessory: {
-            //     type: "button",
-            //     text: {
-            //       type: "plain_text",
-            //       text: "Submit",
-            //       emoji: true,
-            //     },
-            //     action_id: "submit_changes",
-            //   },
-            // },
+                  {
+                    type: "mrkdwn",
+                    text: `*Reminder Times:* ${team.teamstandupQuestions.reminderTimes
+                      .map((time) => `\`${time}\``)
+                      .join(", ")}`,
+                  },
+                ],
+              },
+              {
+                type: "section",
+                fields: [
+                  {
+                    type: "mrkdwn",
+                    text: `*Standup Days:* ${team.teamstandupQuestions.standupDays
+                      .map((day) => `\`${day}\``)
+                      .join(", ")}`,
+                  },
+                  {
+                    type: "mrkdwn",
+                    text: `*Standup Times:* ${team.teamstandupQuestions.standupTimes
+                      .map((time) => `\`${time}\``)
+                      .join(", ")}`,
+                  },
+                ],
+              },
+              {
+                type: "context",
+                elements: [
+                  {
+                    type: "mrkdwn",
+                    text: `*Time Zone:* \`${team.timeZone}\``,
+                  },
+                ],
+              }
+              
           ],
         },
       });
@@ -585,19 +469,19 @@ export const publishEditTeamView = async (
   };
 
 
-  export const publishAddStandupModal = async (client: WebClient, triggerId: string, private_metadata: string) => {
-    try {
+  // export const publishAddStandupModal = async (client: WebClient, triggerId: string, private_metadata: string) => {
+  //   try {
 
-        await client.views.open({
-            trigger_id: triggerId,
-            view: standUpModal(private_metadata)
-        });
+  //       await client.views.open({
+  //           trigger_id: triggerId,
+  //           view: standUpModal(private_metadata)
+  //       });
   
-      console.log("✅ Add Standup Modal View published successfully!");
-    } catch (error) {
-      console.error("❌ Error publishing Add Standup Modal View:", error);
-    }
-  };
+  //     console.log("✅ Add Standup Modal View published successfully!");
+  //   } catch (error) {
+  //     console.error("❌ Error publishing Add Standup Modal View:", error);
+  //   }
+  // };
 
 
   
@@ -607,7 +491,7 @@ export const publishEditTeamView = async (
     try {
         await client.views.open({
             trigger_id: triggerId,
-            view: addTeamModal
+            view: addTeamModal as ModalView
         });
   
         console.log("✅ Opened modal for creating a new team");

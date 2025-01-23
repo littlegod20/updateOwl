@@ -8,6 +8,9 @@ import {
   goBackToManageTeams_action,
 } from "./actions/goBack_action";
 import { viewStandups_action } from "./actions/viewStandups_action";
+import {viewAnalytics_action} from "./actions/viewAnalytics_action"
+import {handleStandupDashboardActions } from "./actions/handleStandupActions_action"
+import {handleAnalyticsActions } from "./actions/handleAnalyticsActions_action"
 import {
   editMemberOverflowActionListener,
   manageTeams_action,
@@ -16,12 +19,11 @@ import {
   overflowMenu_action,
   deleteTeam_action,
   deleteStandup_action,
-  addStandUp_action,
-  addStandupModal_action,
   addNewMember_action,
   updateTeamName_action,
 } from "./actions/manageTeams_action";
 import { app } from "./config/bot.config";
+import { addStandup } from "./functions/addStandup"
 import { appHome_event } from "./events/appHome_event";
 import { initializeSchedules } from "./functions/initializeSchedules";
 import { listenForTeamUpdates } from "./helpers/listenForTeamUpdates";
@@ -52,6 +54,10 @@ goBack_action(app);
 goBackToManageTeams_action(app);
 
 viewStandups_action(app);
+handleStandupDashboardActions(app);
+
+viewAnalytics_action(app);
+handleAnalyticsActions(app);
 
 manageTeams_action(app);
 
@@ -62,8 +68,8 @@ updateTeamName_action(app);
 addNewMember_action(app);
 editMemberOverflowActionListener(app);
 
-addStandUp_action(app);
-addStandupModal_action(app);
+// addStandUp_action(app);
+// addStandupModal_action(app);
 
 overflowMenu_action(app);
 
@@ -127,6 +133,108 @@ app.message(/hello/i, async ({ say }) => {
     console.log("err");
   }
 });
+
+
+// const generateStandupData = () => {
+//   return [
+//     {
+//       teamId: "C089X9T55MG", // Team 1
+//       messageTs: "1737555784.036199",
+//       responses: [
+//         {
+//           userId: "U087XTCCQUF",
+//           date: "2025-01-22",
+//           responseTime: "2025-01-22T09:15:00.000Z",
+//           response: [
+//             { questionId: "1737618610343", answer: "Morning standup started" },
+//             { questionId: "1737618984359", answer: "All is well" },
+//           ],
+//         },
+//         {
+//           userId: "U0889H52ABF",
+//           date: "2025-01-22",
+//           responseTime: "2025-01-22T09:45:00.000Z",
+//           response: [
+//             { questionId: "1737618610343", answer: "Completed the feature" },
+//             { questionId: "1737618984359", answer: "No blockers" },
+//           ],
+//         },
+//       ],
+//     },
+//     {
+//       teamId: "C089X9T55MG", // Team 1
+//       messageTs: "1737555785.036199",
+//       responses: [
+//         {
+//           userId: "U087XTCCQUF",
+//           date: "2025-01-23",
+//           responseTime: "2025-01-23T10:00:00.000Z",
+//           response: [
+//             { questionId: "1737618610343", answer: "Reviewed yesterday’s tasks" },
+//             { questionId: "1737618984359", answer: "Ready for today" },
+//           ],
+//         },
+//       ],
+//     },
+//     {
+//       teamId: "C089X9T55MG", // Team 1
+//       messageTs: "1737555786.036199",
+//       responses: [],
+//     },
+//     {
+//       teamId: "C08AA42P24R", // Team 2
+//       messageTs: "1737555787.036199",
+//       responses: [
+//         {
+//           userId: "U087XTCCQUF",
+//           date: "2025-01-22",
+//           responseTime: "2025-01-22T11:30:00.000Z",
+//           response: [
+//             { questionId: "1737620219215", answer: "Had breakfast" },
+//             { questionId: "1737620242271", answer: "Yes, a minor blocker" },
+//           ],
+//         },
+//       ],
+//     },
+//     {
+//       teamId: "C08AA42P24R", // Team 2
+//       messageTs: "1737555788.036199",
+//       responses: [
+//         {
+//           userId: "U0889H52ABF",
+//           date: "2025-01-23",
+//           responseTime: "2025-01-23T09:00:00.000Z",
+//           response: [
+//             { questionId: "1737620219215", answer: "Started the implementation" },
+//             { questionId: "1737620242271", answer: "No blockers" },
+//           ],
+//         },
+//       ],
+//     },
+//     {
+//       teamId: "C08AA42P24R", // Team 2
+//       messageTs: "1737555789.036199",
+//       responses: [],
+//     },
+//   ];
+// };
+
+// const populateStandups = async () => {
+//   const standupData = generateStandupData();
+//   for (const standup of standupData) {
+//     const result = await addStandup(standup);
+//     if (result.success) {
+//       console.log(`Standup added successfully with ID: ${result.standupId}`);
+//     } else {
+//       console.error(`Failed to add standup:`, result.error);
+//     }
+//   }
+// };
+
+// populateStandups();
+
+
+
 
 (async () => {
   try {
