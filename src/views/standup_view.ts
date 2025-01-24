@@ -1,6 +1,7 @@
 import { WebClient, Block, KnownBlock } from "@slack/web-api";
 // import {  } from "@slack/bolt";
 import { findQuestionText } from "../helpers/findQuestionText";
+import { response } from "express";
 
 
 export const publishStandupView = async (client: WebClient, user_id: string) => {
@@ -49,10 +50,17 @@ export const publishStandupView = async (client: WebClient, user_id: string) => 
     totalQuestions: number;
     averageAnswerLength: number;
   }
+
+  interface IResponse{
+    answer: string; 
+    questionId: string;      // Unique identifier for the question
+    questionType: string;    // Type of the question (e.g., "rating")
+  }
   
-interface Standup{
-  question: string;
-  answer: string;
+  interface Standup{
+    response: IResponse[]          // The answer provided by the user
+    responseTime: string;     // Timestamp of when the response was given
+    userId: string;
 }
     
   interface StandupResponse {
@@ -78,6 +86,9 @@ interface Standup{
     if (filteredStandups === undefined) {
       filteredStandups = [];
     }
+
+    console.log(`Filtered STandup Blocks\n`)
+    filteredStandups.map((standup) => console.log(standup));
   
     return [
       {
@@ -199,26 +210,6 @@ interface Standup{
       {
         type: "divider"
       },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "*Today's Standups*"
-        },
-        accessory: {
-          type: "button",
-          text: {
-            type: "plain_text",
-            text: "Export Standups",
-            emoji: true
-          },
-          style: "primary",
-          action_id: "export_standups"
-        }
-      },
-      {
-        type: "divider"
-      },
       
       // Pending Responses Section
       {
@@ -285,7 +276,7 @@ export const updateStatsOverview = (stats?: StandupStats): (Block | KnownBlock)[
   }];
 };
 
-// Function to update Team's Responses section
+
 export const updateTeamResponses = async (filteredResponses?: StandupResponse[]): Promise<(Block | KnownBlock)[]> => {
   if (!filteredResponses || filteredResponses.length === 0) {
     return [{
@@ -298,41 +289,58 @@ export const updateTeamResponses = async (filteredResponses?: StandupResponse[])
   }
 
   const processStandupResponses = async (standup: StandupResponse): Promise<(Block | KnownBlock)[]> => {
-    const responseBlocks: (Block | KnownBlock)[] = [];
+    let responseBlocks: (Block | KnownBlock)[] = [];
 
-    // Context block with user and timestamp
-    responseBlocks.push({
-      type: "context",
-      elements: [
-        {
-          type: "image",
-          image_url: `https://slack.com/api/users.profile.get?user=${standup.userId}`,
-          alt_text: "user avatar"
-        },
-        {
-          type: "mrkdwn",
-          text: `<@${standup.userId}> • ${new Date(standup.messageTs).toLocaleTimeString()}`
-        }
-      ]
-    });
+    const getDate = (timestamp:string) => {
+      const milliseconds = Math.floor(parseFloat(timestamp) * 1000);
+      const date = new Date(milliseconds);
 
-    // Process each response
-    for (const item of standup.responses) {
-      const questionText = await findQuestionText(item.question);
+      return date.toISOString();
+    }
+
+    for (const response of standup.responses) {
+      console.log("Standup.response", response);
+      
+      // Context block with user and timestamp
       responseBlocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*${questionText}*\n${item.answer}`
-        }
+        type: "context",
+        elements: [
+          {
+            type: "image",
+            image_url: `https://slack.com/api/users.profile.get?user=${response.userId}`,
+            alt_text: "user avatar"
+          },
+          {
+            type: "mrkdwn",
+            text: `<@${response.userId}> • ${getDate(standup.messageTs).split("T")[0]}`
+          }
+        ]
+      });
+
+      // Process each user response
+      for (const userResponse of response.response) {
+        console.log("User Response: ", userResponse);
+        
+        // Process each response
+        const questionText = await findQuestionText(userResponse.questionId);
+
+        // Push the section after getting the question text
+        responseBlocks.push({
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*${questionText}*\n${userResponse.answer}`
+          }
+        });
+      }
+
+      // Divider between standup entries
+      responseBlocks.push({
+        type: "divider"
       });
     }
 
-    // Divider between standup entries
-    responseBlocks.push({
-      type: "divider"
-    });
-
+    console.log("ResponseBlocks", responseBlocks);
     return responseBlocks;
   };
 
