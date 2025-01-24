@@ -135,8 +135,8 @@ export const applyFilters = async ({ ack, body, client }: FilterArgs) => {
 
   const filteredResponses = await filterStandups(filters);
   const filteredResponsesBlocks = await updateTeamResponses(filteredResponses);
-  const stats = await getStats(channelId);
-  const statsBlocks = updateStatsOverview(stats);
+  // const stats = await getStats(channelId);
+  const statsBlocks = updateStatsOverview(undefined);
 
   await client.views.update({
     view_id: body.view?.id || "",

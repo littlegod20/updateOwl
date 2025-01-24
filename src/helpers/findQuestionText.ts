@@ -14,6 +14,9 @@ interface IQuestion {
 // Utility function to find question text by question ID
 export const findQuestionText = async (questionId: string): Promise<string | null> => {
     try {
+        if(!questionId){
+            console.log("No Question Id provided");
+        }
       // Fetch all teams (you may need to adjust the query if teams are filtered)
       const teamsSnapshot = await db.collection("teams").get();
       if (teamsSnapshot.empty) {
@@ -32,6 +35,7 @@ export const findQuestionText = async (questionId: string): Promise<string | nul
         );
   
         if (matchedQuestion) {
+          console.log(`Found matching question for ID: ${questionId}`);
           return matchedQuestion.text; // Return the question text
         }
       }
