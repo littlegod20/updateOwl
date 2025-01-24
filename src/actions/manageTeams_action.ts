@@ -1,5 +1,5 @@
 import { App, UsersSelectAction, ViewSubmitAction  } from "@slack/bolt";
-import { Block, ModalView, InputBlock, PlainTextInput, MultiStaticSelect,MultiUsersSelect, StaticSelect, SectionBlock } from '@slack/web-api';
+import { ConversationsSelect,Block, ModalView, InputBlock, PlainTextInput, MultiStaticSelect,MultiUsersSelect, StaticSelect, SectionBlock } from '@slack/web-api';
 import { addTeams } from "../functions/addTeams";
 import { deleteTeamByID } from "../functions/deleteTeamByID";
 import { updateTeamByID } from "../functions/updateTeamByID";

@@ -95,53 +95,6 @@ export const handleRemoveQuestion = async ({
     }
   };
 
-// Handler for question format selection
-// export const handleQuestionFormatChange = async ({
-//     ack,
-//     body,
-//     client,
-//     // view
-//   }: SlackActionMiddlewareArgs<BlockAction> & AllMiddlewareArgs) => {
-//     await ack();
-    
-//     if (!body.view){
-//         console.log("No Body.view provided")
-//         return; 
-//     } 
-  
-//     const selectedFormat = (body as any).actions[0].selected_option.value;
-//     const blocks = body.view?.blocks;
-    
-//     // Find the options block index
-//     const optionsBlockIndex = blocks.findIndex(
-//       block => block.block_id === 'question_options_block'
-//     );
-    
-//     // Update visibility and requirements of the options block
-//     if (optionsBlockIndex !== -1) {
-//       const optionsBlock = blocks[optionsBlockIndex] as any;
-      
-//       switch (selectedFormat) {
-//         case 'multiple_choice':
-//         case 'rating':
-//           optionsBlock.optional = false;
-//           optionsBlock.label.text = selectedFormat === 'multiple_choice' 
-//             ? 'Enter choices (comma separated):'
-//             : 'Enter rating scale (e.g., 1,2,3,4,5):';
-//           break;
-//         default:
-//           optionsBlock.optional = true;
-//           delete optionsBlock.element.initial_value;
-//           break;
-//       }
-//     }
-  
-//     // Update the view
-//     await client.views.update({
-//       view_id: body.view.id,
-//       view: body.view as any
-//     });
-//   };
 
   // Handler for question format selection
 export const handleQuestionFormatChange = async ({
