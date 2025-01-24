@@ -191,7 +191,7 @@ export const publishManageTeamsView = async (client: WebClient, user_id: string)
     
             console.log("✅ Standup View published successfully!");
         } catch (error) {
-            console.error("❌ Error publishing Standup View:", error);
+            console.error("❌ Error publishing ManageTeams View:", error);
         }
     }
     else{

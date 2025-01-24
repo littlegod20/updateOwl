@@ -1,72 +1,31 @@
 import { WebClient, Block, KnownBlock } from "@slack/web-api";
 // import {  } from "@slack/bolt";
+import { findQuestionText } from "../helpers/findQuestionText";
 
 
 export const publishStandupView = async (client: WebClient, user_id: string) => {
     try {
-        const stats = {
-            totalExpected: 8,
-            totalResponded: 2,
-            responseRate: 25,
-            totalBlockers: 1,
-            pendingResponses: 6
-          };
-          
-          const responses = [
-            {
-                userId: "U12345678",
-                responses: [
-                    { question: "What did you do today?", answer: "Worked on the project and attended meetings." },
-                    { question: "Any blockers?", answer: "Need access to the new system." }
-                ],
-                timestamp: "2025-01-21T09:00:00Z",
-                hasBlocker: true
-            },
-            {
-                userId: "U23456789",
-                responses: [
-                    { question: "What did you do today?", answer: "Completed the task assigned yesterday." },
-                    { question: "Any blockers?", answer: "No blockers." }
-                ],
-                timestamp: "2025-01-21T09:05:00Z",
-                hasBlocker: false
-            },
-            {
-                userId: "U34567890",
-                responses: [
-                    { question: "What did you do today?", answer: "Reviewed the code and pushed changes." },
-                    { question: "Any blockers?", answer: "Waiting for feedback from the team." }
-                ],
-                timestamp: "2025-01-21T09:10:00Z",
-                hasBlocker: true
-            },
-            {
-                userId: "U45678901",
-                responses: [
-                    { question: "What did you do today?", answer: "Attended a client meeting." },
-                    { question: "Any blockers?", answer: "No blockers." }
-                ],
-                timestamp: "2025-01-21T09:15:00Z",
-                hasBlocker: false
-            },
-            {
-                userId: "U56789012",
-                responses: [
-                    { question: "What did you do today?", answer: "Worked on documentation." },
-                    { question: "Any blockers?", answer: "Need clarification on requirements." }
-                ],
-                timestamp: "2025-01-21T09:20:00Z",
-                hasBlocker: true
-            }
-        ];
-        
+      const sampleStandupStats: StandupStats = {
+        teamId: "T12345678",
+        teamName: "Development Team",
+        totalExpected: 10,
+        totalResponded: 7,
+        responseRate: 70, // 70%
+        averageResponseTime: 15, // 15 minutes
+        mostActiveMembers: ["U12345678", "U23456789", "U34567890"], // User IDs of the top 3 members
+        pendingResponses: 3,
+        totalQuestions: 5,
+        averageAnswerLength: 50 // Average answer length in characters
+      };    
+
+        const statsBlocks = updateStatsOverview(sampleStandupStats);
 
         // Update the App Home with standup data
         await client.views.publish({
             user_id: user_id,  // Corrected from user_id to user
             view: {
             type: "home",
-            blocks: createStandupsDashboard(stats, responses)
+            blocks: await createStandupsDashboard(statsBlocks)
             },
         });  // Added the closing parenthesis here
   
@@ -79,39 +38,62 @@ export const publishStandupView = async (client: WebClient, user_id: string) => 
 
 
   interface StandupStats {
+    teamId: string;
+    teamName: string;
     totalExpected: number;
     totalResponded: number;
     responseRate: number;
-    totalBlockers: number;
+    averageResponseTime: number; // in minutes
+    mostActiveMembers: string[]; // top 3 most responsive members
     pendingResponses: number;
+    totalQuestions: number;
+    averageAnswerLength: number;
   }
   
+interface Standup{
+  question: string;
+  answer: string;
+}
+    
   interface StandupResponse {
-    userId: string;
-    responses: { question: string; answer: string }[];
-    timestamp: string;
-    hasBlocker: boolean;
+    teamId: string;
+    userId?: string;
+    messageTs: string; // ISO 8601 format for date-time
+    responses: Standup[]; // Array of response objects
   }
+    
+
+
+  export const createStandupsDashboard = async (
+    statsBlocks?: (Block | KnownBlock)[] | [],
+    filteredStandups?: (Block | KnownBlock)[] | []
+  ): Promise<(Block | KnownBlock)[]> => {
+
+    // Handle undefined statsBlocks
+    if (statsBlocks === undefined) {
+      statsBlocks = [];
+    }
+
+    // Handle undefined statsBlocks
+    if (filteredStandups === undefined) {
+      filteredStandups = [];
+    }
   
-export const createStandupsDashboard = (
-    stats: StandupStats,
-    todaysResponses: StandupResponse[],
-  ): (Block | KnownBlock)[] => {
     return [
-        {
+      {
         type: "actions",
         elements: [
-            {
+          {
             type: "button",
             text: {
-                type: "plain_text",
-                text: "Go Back",
-                emoji: true,
+              type: "plain_text",
+              text: "Go Back",
+              emoji: true,
             },
             action_id: "go_back",
-            },
+          },
         ],
-        },
+      },
       // Header Section
       {
         type: "header",
@@ -121,24 +103,32 @@ export const createStandupsDashboard = (
           emoji: true
         }
       },
-      // Stats Overview
       {
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: `*Response Rate*\n${stats.responseRate}% (${stats.totalResponded}/${stats.totalExpected})`
-          },
-          {
-            type: "mrkdwn",
-            text: `*Blockers*\n${stats.totalBlockers} reported`
-          },
-          {
-            type: "mrkdwn",
-            text: `*Pending*\n${stats.pendingResponses} responses`
-          }
-        ]
+        "type": "actions",
+        "elements": [
+              {
+                  "type": "conversations_select",
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "Select a conversation",
+                      "emoji": true
+                  },
+                  "initial_conversation": "G12345678",
+                  "action_id": "actionId-0"
+              },
+              {
+                  "type": "channels_select",
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "Select a channel",
+                      "emoji": true
+                  },
+                  "initial_channel": "C12345678",
+                  "action_id": "actionId-2"
+              },
+          ]
       },
+      ...statsBlocks,
       {
         type: "divider"
       },
@@ -150,58 +140,62 @@ export const createStandupsDashboard = (
           text: "*🔍 Filter Standups*"
         },
         accessory: {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Export Filtered Standups",
-              emoji: true
-            },
-            style: "primary",
-            action_id: "export_standups"
-          }
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "Export Filtered Standups",
+            emoji: true
+          },
+          style: "primary",
+          action_id: "export_standups"
+        }
       },
       {
         type: "actions",
         elements: [
           {
-            type: "external_select",
+            type: "users_select",
             placeholder: {
-              type: "plain_text",
-              text: "Filter by user",
-              emoji: true
+                "type": "plain_text",
+                "text": "Select a user",
+                "emoji": true
             },
+            initial_user: "U12345678",
             action_id: "filter_by_user"
           },
           {
-            type: "external_select",
+            type: "conversations_select",
             placeholder: {
-              type: "plain_text",
-              text: "Filter by question",
-              emoji: true
+                type: "plain_text",
+                text: "Select a channel",
+                emoji: true
             },
-            action_id: "filter_by_question"
+            initial_conversation: "G12345678",
+            action_id: "filter_by_channel"
+        },
+        {
+          type: "datepicker",
+          placeholder: {
+            type: "plain_text",
+            text: "Filter by date",
+            emoji: true
           },
-          {
-            type: "datepicker",
-            placeholder: {
-              type: "plain_text",
-              text: "Filter by date",
-              emoji: true
-            },
-            action_id: "filter_by_date"
+          action_id: "filter_by_date"
+        },
+        {
+          type: "button",
+          action_id: "apply_filters",
+          text: {
+            type: "plain_text",
+            text: "Apply Filters",
+            emoji: true,
           },
-          {
-            type: "button",
-            action_id: "apply_filters",
-            text: {
-              type: "plain_text",
-              text: "Apply Filters",
-              emoji: true,
-            },
-            style: "primary",
-          },
+          style: "primary",
+        },
         ]
       },
+      // Team's Responses
+      ...filteredStandups ,
       {
         type: "divider"
       },
@@ -225,37 +219,7 @@ export const createStandupsDashboard = (
       {
         type: "divider"
       },
-      // Today's Responses
-      ...todaysResponses.flatMap((response): (Block | KnownBlock)[] => [
-        {
-          type: "context",
-          elements: [
-            {
-              type: "image",
-              image_url: `https://slack.com/api/users.profile.get?user=${response.userId}`,
-              alt_text: "user avatar"
-            },
-            {
-              type: "mrkdwn",
-              text: `<@${response.userId}> • ${new Date(response.timestamp).toLocaleTimeString()}`
-            },
-            {
-              type: "mrkdwn",
-              text: response.hasBlocker ? "🚫 *Has Blockers*" : "✅ No Blockers"
-            }
-          ]
-        },
-        ...response.responses.map((item): Block | KnownBlock => ({
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*${item.question}*\n${item.answer}`
-          }
-        })),
-        {
-          type: "divider"
-        }
-      ]),
+      
       // Pending Responses Section
       {
         type: "section",
@@ -275,3 +239,106 @@ export const createStandupsDashboard = (
       }
     ];
   };
+
+
+
+  // Function to update Stats Overview section
+export const updateStatsOverview = (stats?: StandupStats): (Block | KnownBlock)[] => {
+  if (!stats) {
+    return [{
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "*📊 No Stats Found*\nUnable to retrieve team statistics at this time."
+      }
+    }];
+  }
+
+  return [{
+    type: "section",
+    fields: [
+      {
+        type: "mrkdwn",
+        text: `*Response Rate*\n${stats.teamName}: ${stats.responseRate}% (${stats.totalResponded}/${stats.totalExpected})`
+      },
+      {
+        type: "mrkdwn",
+        text: `*Pending Responses*\n${stats.teamName}: ${stats.pendingResponses} members`
+      },
+      {
+        type: "mrkdwn",
+        text: `*Avg Response Time*\n${stats.averageResponseTime} mins`
+      },
+      {
+        type: "mrkdwn",
+        text: `*Most Active Members*\n${stats.mostActiveMembers.map(m => `<@${m}>`).join(', ')}`
+      },
+      {
+        type: "mrkdwn",
+        text: `*Total Questions*\n${stats.totalQuestions}`
+      },
+      {
+        type: "mrkdwn",
+        text: `*Avg Answer Length*\n${stats.averageAnswerLength} chars`
+      }
+    ]
+  }];
+};
+
+// Function to update Team's Responses section
+export const updateTeamResponses = async (filteredResponses?: StandupResponse[]): Promise<(Block | KnownBlock)[]> => {
+  if (!filteredResponses || filteredResponses.length === 0) {
+    return [{
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "*🔍 No Results Found*\nNo standups match the current filter criteria."
+      }
+    }];
+  }
+
+  const processStandupResponses = async (standup: StandupResponse): Promise<(Block | KnownBlock)[]> => {
+    const responseBlocks: (Block | KnownBlock)[] = [];
+
+    // Context block with user and timestamp
+    responseBlocks.push({
+      type: "context",
+      elements: [
+        {
+          type: "image",
+          image_url: `https://slack.com/api/users.profile.get?user=${standup.userId}`,
+          alt_text: "user avatar"
+        },
+        {
+          type: "mrkdwn",
+          text: `<@${standup.userId}> • ${new Date(standup.messageTs).toLocaleTimeString()}`
+        }
+      ]
+    });
+
+    // Process each response
+    for (const item of standup.responses) {
+      const questionText = await findQuestionText(item.question);
+      responseBlocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${questionText}*\n${item.answer}`
+        }
+      });
+    }
+
+    // Divider between standup entries
+    responseBlocks.push({
+      type: "divider"
+    });
+
+    return responseBlocks;
+  };
+
+  // Process all standups asynchronously
+  const processedStandups = await Promise.all(filteredResponses.map(processStandupResponses));
+  
+  // Flatten the processed standups
+  return processedStandups.flat();
+};

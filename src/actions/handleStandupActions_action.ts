@@ -1,25 +1,22 @@
 import { App } from "@slack/bolt";
+// import {filterByUser, filterByDate, filterByQuestion, applyFilters, filterByChannel} from "../actionHandlers/standupActionsHandler";
+import {applyFilters } from "../actionHandlers/standupActionsHandler";
 
 
 // Action handlers for the interactive elements
 export const handleStandupDashboardActions = (app: App) => {
     // Handle user filter
-    app.action('filter_by_user', async ({ ack, body, client }) => {
-      await ack();
-      // Implement user filtering logic
-    });
+    // app.action('filter_by_user', filterByUser);
   
-    // Handle question filter
-    app.action('filter_by_question', async ({ ack, body, client }) => {
-      await ack();
-      // Implement question filtering logic
-    });
+    // // Handle question filter
+    // app.action('filter_by_question', filterByQuestion);
   
-    // Handle date filter
-    app.action('filter_by_date', async ({ ack, body, client }) => {
-      await ack();
-      // Implement date filtering logic
-    });
+    // // Handle date filter
+    // app.action('filter_by_date', filterByDate);
+
+    // app.action("filter_by_channel", filterByChannel);
+
+    app.action("apply_filters", applyFilters)
   
     // Handle export
     app.action('export_standups', async ({ ack, body, client }) => {
