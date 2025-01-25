@@ -1,6 +1,6 @@
 import { App } from "@slack/bolt";
 // import {filterByUser, filterByDate, filterByQuestion, applyFilters, filterByChannel} from "../actionHandlers/standupActionsHandler";
-import {applyFilters } from "../actionHandlers/standupActionsHandler";
+import {applyFilters, filterStatsByChannel } from "../actionHandlers/standupActionsHandler";
 
 
 // Action handlers for the interactive elements
@@ -14,7 +14,7 @@ export const handleStandupDashboardActions = (app: App) => {
     // // Handle date filter
     // app.action('filter_by_date', filterByDate);
 
-    // app.action("filter_by_channel", filterByChannel);
+    app.action("actionId-0", filterStatsByChannel);
 
     app.action("apply_filters", applyFilters)
   

@@ -6,27 +6,17 @@ import { response } from "express";
 
 export const publishStandupView = async (client: WebClient, user_id: string) => {
     try {
-      const sampleStandupStats: StandupStats = {
-        teamId: "T12345678",
-        teamName: "Development Team",
-        totalExpected: 10,
-        totalResponded: 7,
-        responseRate: 70, // 70%
-        averageResponseTime: 15, // 15 minutes
-        mostActiveMembers: ["U12345678", "U23456789", "U34567890"], // User IDs of the top 3 members
-        pendingResponses: 3,
-        totalQuestions: 5,
-        averageAnswerLength: 50 // Average answer length in characters
-      };    
-
-        const statsBlocks = updateStatsOverview(sampleStandupStats);
+        // Fetch response blocks and stats dynamically
+        const filteredResponsesBlocks = await updateTeamResponses(undefined);
+        const statsBlocks = updateStatsOverview(undefined);
 
         // Update the App Home with standup data
         await client.views.publish({
             user_id: user_id,  // Corrected from user_id to user
             view: {
-            type: "home",
-            blocks: await createStandupsDashboard(statsBlocks)
+              type: "home",
+              private_metadata: JSON.stringify({statsData: undefined, filteredResponses: undefined }),
+              blocks: await createStandupsDashboard(statsBlocks, filteredResponsesBlocks)
             },
         });  // Added the closing parenthesis here
   
@@ -128,6 +118,15 @@ export const publishStandupView = async (client: WebClient, user_id: string) => 
                   "action_id": "actionId-0"
               },
               {
+                type: "datepicker",
+                placeholder: {
+                  type: "plain_text",
+                  text: "Filter by date",
+                  emoji: true
+                },
+                action_id: "actionId-1"
+              },
+              {
                   "type": "channels_select",
                   "placeholder": {
                       "type": "plain_text",
@@ -210,71 +209,104 @@ export const publishStandupView = async (client: WebClient, user_id: string) => 
       {
         type: "divider"
       },
-      
-      // Pending Responses Section
+
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "*🕐 Pending Responses*"
+          text: "*💾 Generate Team Report*"
         }
       },
       {
-        type: "context",
+        type: "actions",
         elements: [
           {
-            type: "mrkdwn",
-            text: `Outstanding responses: <@user1>, <@user2>, <@user3>`
-          }
+            type: "conversations_select",
+            placeholder: {
+                type: "plain_text",
+                text: "Select a channel ",
+                emoji: true
+            },
+            initial_conversation: "G12345678",
+            action_id: "filter_by_team"
+        },
+        {
+          type: "button",
+          action_id: "generate_team_report",
+          text: {
+            type: "plain_text",
+            text: "Generate Report",
+            emoji: true,
+          },
+          style: "primary",
+        },
         ]
-      }
+      },
+      // Pending Responses Section
+  
     ];
   };
 
 
 
   // Function to update Stats Overview section
+
 export const updateStatsOverview = (stats?: StandupStats): (Block | KnownBlock)[] => {
   if (!stats) {
-    return [{
+    return [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "*📊 No Stats Found*\nWe couldn't retrieve your team's statistics at this time. Please check back later or ensure standup data is being recorded.",
+        },
+      },
+    ];
+  }
+
+  return [
+    {
+      type: "section",
+      fields: [
+        {
+          type: "mrkdwn",
+          text: `*🟢 Response Rate*\n*${stats.teamName}*: ${stats.responseRate}% (${stats.totalResponded}/${stats.totalExpected})`,
+        },
+        {
+          type: "mrkdwn",
+          text: `*⏳ Pending Responses*\n*${stats.teamName}*: ${stats.pendingResponses} members still need to respond.`,
+        },
+        {
+          type: "mrkdwn",
+          text: `*⏱️ Avg Response Time*\n${stats.averageResponseTime} mins per member.`,
+        },
+        {
+          type: "mrkdwn",
+          text: `*🏅 Most Active Members*\n${stats.mostActiveMembers.map((m) => `• <@${m}>`).join("\n")}`,
+        },
+        {
+          type: "mrkdwn",
+          text: `*❓ Total Questions*\n${stats.totalQuestions} standup questions.`,
+        },
+        {
+          type: "mrkdwn",
+          text: `*✍️ Avg Answer Length*\n${stats.averageAnswerLength} characters per answer.`,
+        },
+      ],
+    },
+    {
+      type: "divider",
+    },
+    {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "*📊 No Stats Found*\nUnable to retrieve team statistics at this time."
-      }
-    }];
-  }
-
-  return [{
-    type: "section",
-    fields: [
-      {
-        type: "mrkdwn",
-        text: `*Response Rate*\n${stats.teamName}: ${stats.responseRate}% (${stats.totalResponded}/${stats.totalExpected})`
+        text: "🛠️ *Need Help?*\nReach out to your team lead if the stats don’t seem right, or visit our help center for troubleshooting tips.",
       },
-      {
-        type: "mrkdwn",
-        text: `*Pending Responses*\n${stats.teamName}: ${stats.pendingResponses} members`
-      },
-      {
-        type: "mrkdwn",
-        text: `*Avg Response Time*\n${stats.averageResponseTime} mins`
-      },
-      {
-        type: "mrkdwn",
-        text: `*Most Active Members*\n${stats.mostActiveMembers.map(m => `<@${m}>`).join(', ')}`
-      },
-      {
-        type: "mrkdwn",
-        text: `*Total Questions*\n${stats.totalQuestions}`
-      },
-      {
-        type: "mrkdwn",
-        text: `*Avg Answer Length*\n${stats.averageAnswerLength} chars`
-      }
-    ]
-  }];
+    },
+  ];
 };
+
 
 
 export const updateTeamResponses = async (filteredResponses?: StandupResponse[]): Promise<(Block | KnownBlock)[]> => {
@@ -307,7 +339,7 @@ export const updateTeamResponses = async (filteredResponses?: StandupResponse[])
         elements: [
           {
             type: "image",
-            image_url: `https://slack.com/api/users.profile.get?user=${response.userId}`,
+            image_url: `https://tse4.mm.bing.net/th?id=OIP.SAcV4rjQCseubnk32USHigHaHx&w=474&h=474&c=7`,
             alt_text: "user avatar"
           },
           {
