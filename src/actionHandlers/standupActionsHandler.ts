@@ -11,87 +11,70 @@ import { createStandupsDashboard, updateStatsOverview, updateTeamResponses } fro
   
   type FilterArgs = SlackActionMiddlewareArgs<BlockAction> & AllMiddlewareArgs;
 
+ 
+  export const filterStatsByChannel = async ({ ack, body, client }: FilterArgs) => {
+    await ack();
+
+    const stateValues = body.view?.state?.values || {};
+    let channelId, date;
+
+    console.log("body.view?.state?.values: ", stateValues);
+
+    for (const blockId in stateValues) {
+      const block = stateValues[blockId];
+        if (block['actionId-0']?.type === 'conversations_select') {
+          channelId = block['actionId-0'].selected_conversation;
+          if(channelId == 'G12345678'){
+            channelId = undefined;
+          }
+          if (!channelId) {
+            channelId = undefined;
+            console.error("No channel ID found in the conversations_select action for stats.");
+            return;
+          }
+        }
+        if (block['actionId-1']?.type === 'datepicker') {
+          date = block['actionId-1'].selected_date;
+          if (!date) {
+            date = undefined;
+            console.error("No date  found in the selected_date action for stats.");
+            return;
+          }
+        }
+    }
+
+    let filteredResponsesBlocks;
+    // console.log("privateMetadata in body.view", body.view?.private_metadata);
+    const privateMetadata = JSON.parse(body.view?.private_metadata || "{}");
+
+    console.log("privateMetadata", privateMetadata);
+    console.log("ChannelId in stat filter", channelId);
+    // const filteredResponses = await filterStandups({ teamId: channelId });
+    if(privateMetadata.filteredResponses){
+       filteredResponsesBlocks = await updateTeamResponses(privateMetadata.filteredResponses);
+    }
+    else{
+       filteredResponsesBlocks = await updateTeamResponses(undefined);
+    }
+
+    const stats = await getStats(channelId, date);
+    console.log("Stats in ChannelStatsFilter ", stats);
+    const statsBlocks = updateStatsOverview(stats);
 
 
-  
-//   export const filterByUser = async ({ ack, action, body, client }: FilterArgs) => {
-//     await ack();
-  
-//     const userId = (action as any).selected_user; // Type assertion 
-//     // const teamId = body.team?.id || ''; // Safely get team ID
-//     const channelId = body.channel?.id || ''; 
-    
-//     const filteredResponses = await filterStandups({ memberId: userId });
-//     const stats = await getStats(channelId);
-  
-//     await client.views.update({
-//       view_id: body.view?.id || "",
-//       view: {
-//         type: "home",
-//         blocks: await createStandupsDashboard(stats, filteredResponses),
-//       },
-//     });
-//   };
-  
-  
-//   export const filterByDate = async ({ ack, body, client }: FilterArgs) => {
-//     await ack();
-  
-//     const stateValues = body.view?.state?.values || {};
-//     // const teamId = body.team?.id || ''; // Safely get team ID
-//     const channelId = body.channel?.id || ''; 
-//     console.log("body.channel?.id ", body.channel?.id )
-  
-//     const filters = {
-//         date: stateValues.date_filter?.date?.selected_date ?? undefined,
-//         memberId: typeof stateValues.user_filter?.selected_user === "string"
-//           ? stateValues.user_filter?.selected_user
-//           : undefined,
-//         teamId: typeof stateValues.channel_filter?.selected_channel === "string"
-//           ? stateValues.channel_filter?.selected_channel
-//           : undefined,
-//     };
-  
-//     const filteredResponses = await filterStandups(filters);
-//     const stats = await getStats(channelId);
-  
-//     await client.views.update({
-//       view_id: body.view?.id || "",
-//       view: {
-//         type: "home",
-//         blocks: await createStandupsDashboard(stats, filteredResponses),
-//       },
-//     });
-//   };
-  
-//   export const filterByChannel = async ({ ack, body, client }: FilterArgs) => {
-//     await ack();
-  
-//     // const channelId = (body.actions?.[0] as any)?.selected_channel; 
-//     // const teamId = channelId || body.team?.id || '';
-//     // Extract the channelId from the body
-//     const channelId = (body.actions?.[0] as any)?.selected_conversation; // Safely access the selected conversation
-
-//   if (!channelId) {
-//     console.error("No channel ID found in the conversations_select action.");
-//     return;
-//   }
 
   
-//     const filteredResponses = await filterStandups({ teamId: channelId });
-//     const stats = await getStats(channelId);
-
+    await client.views.update({
+      view_id: body.view?.id || "",
+      view: {
+        type: "home",
+        private_metadata: JSON.stringify({ statsData: stats, filteredResponses: privateMetadata.filteredResponses}),
+        blocks: await createStandupsDashboard(statsBlocks, filteredResponsesBlocks) ,
+      },
+    });
   
-//     await client.views.update({
-//       view_id: body.view?.id || "",
-//       view: {
-//         type: "home",
-//         blocks: await createStandupsDashboard(stats, filteredResponses) ,
-//       },
-//     });
-  
-//     console.log(`Filtered standups for channel ID: ${channelId}`);
-//   };
+    console.log(`Filtered standups for channel ID: ${channelId}`);
+  };
 
 
 
@@ -101,7 +84,9 @@ export const applyFilters = async ({ ack, body, client }: FilterArgs) => {
   await ack();
 
   const stateValues = body.view?.state?.values || {};
-  console.log("body.view?.state?.values: ", stateValues);
+  // console.log("body.view?.state?.values: ", stateValues);
+  console.log("privateMetadata in body.view in apply Filters", body.view?.private_metadata);
+  const privateMetadata = JSON.parse(body.view?.private_metadata || "{}");
 
   // Extract filters from the nested state values dynamically
   let channelId, date, memberId;
@@ -132,17 +117,23 @@ export const applyFilters = async ({ ack, body, client }: FilterArgs) => {
   };
 
   console.log("Filters: ", filters);
+  let statsBlocks;
+
+  if(privateMetadata.statsData){
+    statsBlocks = updateStatsOverview(privateMetadata.statsData);
+  }
+  else{
+    statsBlocks = updateStatsOverview(undefined);
+  }
 
   const filteredResponses = await filterStandups(filters);
   const filteredResponsesBlocks = await updateTeamResponses(filteredResponses);
-  // const stats = await getStats(channelId);
-  const statsBlocks = updateStatsOverview(undefined);
 
   await client.views.update({
     view_id: body.view?.id || "",
     view: {
       type: "home",
-
+      private_metadata: JSON.stringify({statsData: privateMetadata.statsData, filteredResponses: filteredResponses }),
       blocks: await createStandupsDashboard(statsBlocks, filteredResponsesBlocks),
     },
   });
