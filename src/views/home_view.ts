@@ -58,62 +58,6 @@ export const publishHomeView = async (client: WebClient,userName: string, user_i
               action_id: "view_standups",
             },
           },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: "*Analytics*",
-            },
-            accessory: {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "View Analytics",
-              },
-              action_id: "see_analytics",
-            },
-          },
-
-
-
-          // {
-          //   type: "section",
-          //   text: {
-          //     type: "mrkdwn",
-          //     text: "Welcome to your dashboard! Please select an option from the dropdown below:",
-          //   },
-          //   accessory: {
-          //     type: "static_select",
-          //     placeholder: {
-          //       type: "plain_text",
-          //       text: "Choose an option",
-          //     },
-          //     options: [
-          //       {
-          //         text: {
-          //           type: "plain_text",
-          //           text: "View Today's Standup",
-          //         },
-          //         value: "today_standup",
-          //       },
-          //       {
-          //         text: {
-          //           type: "plain_text",
-          //           text: "View Blockers",
-          //         },
-          //         value: "view_blockers",
-          //       },
-          //       {
-          //         text: {
-          //           type: "plain_text",
-          //           text: "See Team Progress",
-          //         },
-          //         value: "team_progress",
-          //       },
-          //     ],
-          //     action_id: "select_dashboard_option",
-          //   },
-          // },
         ],
       },
     });
